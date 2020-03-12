@@ -1,0 +1,3638 @@
+<?xml version="1.0" encode="UTF-8" standalone="yes"?>
+<model>
+    <entity name="users" time="true" label="用户管理">
+        <attr name="open_id" type="name" label="微信open_id"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <attr name="name" type="name" label="姓名"/>
+        <attr name="idcard" type="idcard" label="身份证号"/>
+        <attr name="company" type="message" label="单位名称"/>
+        <attr name="phone" type="phone" required="true" label="手机号码"/>
+        <attr name="email" type="email" label="邮箱地址"/>
+        <attr name="enabled" type="bool" default="1" label="是否可用"/>
+        <attr name="isLookVideo" type="int" default="0" label="是否在看视频"/>
+        <attr name="password" type="password" required="true" label="登录密码"/>
+        <attr name="balance" type="money" default="0" label="账户余额"/>
+        <oper name="wx_login" type="wxlogin2" label="微信登陆"></oper>
+        <oper name="bind_user" type="aftertreatment" label="微信与用户首次绑定">
+            data: { util: WxLoginUtil.bind_user}
+        </oper>
+        <oper name="bind_instructor" type="aftertreatment" label="微信与辅导员首次绑定">
+            data: { util: WxLoginUtil.bind_instructor}
+        </oper>
+        <oper role="shop" name="batchRechargeByUserId" type="aftertreatment" page="店铺管理-余额充值" label="根据用户id数组批量充值">
+            data: { util: UserUtil.batchRechargeByUserId}
+        </oper>
+        <oper role="shop" name="batchRechargeByIdcard" type="aftertreatment" page="店铺管理-余额充值" label="根据身份证数组批量充值">
+            data: { util: UserUtil.batchRechargeByIdcard}
+        </oper>
+        <oper name="login" type="login" page="首页" label="用户登录">
+            data: {id: id, shop_id: shop_id},
+            with: {phone: phone, password: password, shop_id: shop_id}
+        </oper>
+        <oper name="login_by_idcard" page="首页" type="login" label="用户登录身份证">
+            data: {id: id, shop_id: shop_id},
+            with: {idcard: idcard, password: password, shop_id: shop_id}
+        </oper>
+        <oper name="sms_send" page="首页" type="sms_send" label="发送验证码"/>
+        <oper role="client" name="profile" page="个人中心,个人中心-修改密码,支付中心,发表评论,学时证明,店铺管理-学员管理,首页" type="first" label="获取个人信息">
+            data: {
+                id: id,
+                name: name, 
+                idcard: idcard, 
+                company: company, 
+                phone: phone, 
+                email: email, 
+                balance: balance,
+                isLookVideo : isLookVideo,
+                open_id: open_id
+            },
+            with: {id: token.id}
+        </oper>
+        <oper role="client" page="个人中心-修改密码,个人中心-编辑个人信息" name="edit" type="update" label="更新个人信息">
+            data: {name: name, idcard: idcard, company: company, email: email, open_id: open_id},
+            with: {id: token.id}
+        </oper>
+        <oper role="shop" page="店铺管理-学员管理" name="shop_edit" type="update" label="店铺更新用户信息">
+            data: {name: name, phone: phone, idcard: idcard, company: company, email: email},
+            with: {id: id}
+        </oper>
+        <oper role="client" page="个人中心-修改密码" name="setpswd" type="setpwd" label="密码重置">
+            data: {password: password},
+            with: {id: token.id, password: opassword}
+        </oper>
+        <oper page="忘记密码" name="set_password" type="set_password_sms" label="根手机验证码改密码">
+            data: { password: password },
+            with: { phone: phone }
+        </oper>
+        <oper role="shop" name="search_pay_project" page="店铺管理-班级管理" type="search_pay_users" label="查询已经购买产品的用户">
+        </oper>
+        <oper role="shop" page="店铺管理-余额充值,店铺管理-CZ管理" name="search" type="search" label="查询用户列表">
+            data: {id: id, name: name, idcard: idcard, email: email, company: company, phone: phone, balance: balance},
+            with: {
+                name: [like, name],
+                phone: [like, phone],
+                company: [like, company],
+                idcard: [like, idcard],
+                id: id,
+                shop_id: shop_id
+            }
+        </oper>
+        <oper role="client" page="项目式学习页面,我的订单,下单页面" name="isPay" type="is_pay_product" label="查询用户是否已购买此课程">
+            data: {
+                name: user_name,
+                orders.owner_id: {
+                    purchased.order_id: {
+                       product_id: product_id,
+                       id: purchased_id
+                    }
+                }
+            },
+            with: {purchased.product_id: product_id, orders.owner_id: token.id},
+            filter: {orders.state: 2}
+        </oper>
+        <oper role="client" page="店铺管理-余额充值" name="get_balance" type="first" label="根据用户id获取余额">
+            data: {
+                balance: balance
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="client" page="店铺管理-余额充值" name="balance" type="update" label="更新个人余额">
+            data: {
+                balance: balance
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="client" name="id_arr_balance" type="update" label="根据个人id批量更新余额">
+            data: {
+                balance: balance
+            },
+            withIn: {
+                id: id_arr
+            }
+        </oper>
+        <oper role="client" name="idcard_arr_balance" type="update" label="根据个人身份证批量更新余额">
+            data: {
+                balance: balance
+            },
+            withIn: {
+                idcard: idcard_arr
+            }
+        </oper>
+        <oper role="shop" name="getTokenByUserId" page="店铺管理-学员管理" type="aftertreatment">
+            data: {util: UserUtil.getTokenByUserId}
+        </oper>
+        <oper role="client" page="支付中心" name="balance_token" type="update" label="根据token更新个人余额">
+            data: {
+                balance: balance
+            },
+            with: {
+                id: token.id
+            }
+        </oper>
+        <oper role="client" page="店铺管理-CZ管理" name="user_by_idcard" type="search" label="根据身份证获取用户">
+            data: {
+                id: id,
+                name: name
+            },
+            with: {
+                idcard: idcard
+            }
+        </oper>
+        <oper role="client" page="店铺管理-余额充值,店铺管理-CZ管理,店铺管理-学时证明管理" name="idcard_arr_id" type="search" label="根据身份证数组获取id数组">
+            data: {
+                id: id
+            },
+            with: {
+                shop_id: shop_id
+            },
+            withIn: {
+                idcard: idcard_arr
+            }
+        </oper>
+        <oper page="首页" name="register" type="aftertreatment" label="用户注册">
+            data: {util: UserUtil.register}
+        </oper>
+    </entity>
+    <entity name="user_log" time="true" label="用户记录">
+        <attr name="count" type="int" label="消费金额"/>
+        <attr name="user_id" type="int" table="users" label="用户id"/>
+        <attr name="content" type="name" label="备注"/>
+        <attr name="balance" type="int" label="余额"/>
+        <attr name="shop_id" type="int" table="shops" label="店铺id"/>
+        <oper name="search" page="店铺管理-余额记录" type="search" label="获取所有日志记录">
+            data: {
+                id: id,
+                count: count,
+                content: content,
+                balance: balance,
+                created_at: created_at,
+                user_id: {
+                    id: user_id,
+                    name: name,
+                    idcard: idcard,
+                    company: company
+                }
+            },
+            with: {
+                shop_id: shop_id,
+                users.idcard: [like, idcard],
+                users.name: [like, name],
+                users.company: [like, company]
+            },
+            order: {id: desc}
+        </oper>
+        <oper name="create_by_userid" page="店铺管理-余额充值" type="insert" label="根据用户id创建余额更新记录">
+            data: {
+                count: count,
+                user_id: user_id,
+                content: content,
+                balance: balance,
+                shop_id: shop_id
+            }
+        </oper>
+        <oper name="create_by_token" page="支付中心" type="insert" label="根据token创建余额更新记录">
+            data: {
+                count: count,
+                user_id: token.id,
+                content: content,
+                balance: balance,
+                shop_id: shop_id
+            }
+        </oper>
+    </entity>
+    <entity name="labels" label="标签管理">
+        <attr name="name" type="name" label="名称"/>
+        <attr name="sort" type="int" label="排序"/>
+        <attr name="parent_id" type="key" table="labels" default="0" required="true" label="父标签ID"/>
+        <attr name="onsale" type="int" label="是否上架"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <attr name="id" type="key" table="product_labels" label="产品-标签id"/>
+        <oper name="search" page="店铺管理-项目" type="search" label="查询标签列表">
+            data: {id: id, parent_id: parent_id, name: name},
+            with: {name: [like, name], parent_id: parent_id},
+            order: {sort: desc},
+            filter: {onsale: 1}
+        </oper>
+        <oper name="all" page="首页,课程详情页面,课程搜索页面,店铺管理-产品列表,店铺管理-项目式产品列表,店铺管理-标签管理" type="all" label="查询标签列表">
+            data: {id: id, parent_id: parent_id, name: name},
+            with: {name: [like, name],shop_id: shop_id},
+            order: {sort: desc},
+            filter: {onsale: 1}
+        </oper>
+		<oper role="shop" name="edit" page="店铺管理-标签管理" type="update" label="修改标签">
+			data:{
+                parent_id: parent_id,
+				name: name
+			},
+			with:{
+				id: id
+			}
+		</oper>
+		<oper role="shop" name="create" page="店铺管理-标签管理" type="insert" label="新增标签">
+			data:{
+				parent_id: parent_id,
+				name: name,
+                sort: sort,
+                onsale: onsale,
+                shop_id: shop_id
+			}
+		</oper>
+		<oper role="shop" name="delete" page="店铺管理-标签管理" type="update" label="删除标签">
+            data: {
+                onsale: onsale
+            },
+			with:{
+                id: id
+            }
+		</oper>
+    </entity>
+    <entity name="shop_labels" label="店铺标签管理">
+        <attr name="name" type="name" label="名称"/>
+        <attr name="sort" type="int" label="排序"/>
+        <attr name="parent_id" type="key" table="labels" default="0" required="true" label="父标签ID"/>
+        <attr name="shop_id" type="key" table="shops" default="0" required="true" label="店铺ID"/>
+        <attr name="onsale" type="int" label="是否上架"/>
+        <oper role="shop" name="search" type="search" label="查询标签列表">
+            data: {id: id, parent_id: parent_id, name: name},
+            with: {name: [like, name], parent_id: parent_id},
+            order: {sort: desc},
+            filter: {onsale: 1}
+        </oper>
+        <oper role="shop" name="all" type="all" label="查询标签列表">
+            data: {id: id, parent_id: parent_id, name: name},
+            with: {name: [like, name]},
+            order: {sort: desc},
+            filter: {onsale: 1}
+        </oper>
+		<oper role="shop" name="edit" type="update" label="修改标签">
+			data:{
+				parent_id: parent_id,
+				name: name,
+                onsale: onsale
+			},
+			with:{
+				id: id
+			}
+		</oper>
+		<oper role="shop" name="create" type="insert" label="新增标签">
+			data:{
+				parent_id: parent_id,
+				name: name,
+                onsale: onsale
+			}
+		</oper>
+		<oper role="shop" name="delete" type="delete" label="删除标签">
+			with:{id: id}
+		</oper>
+    </entity>
+    <entity name="resources" time="true" label="资源管理">
+        <attr name="shop_id" type="key" table="shops" required="true" label="所属店铺ID"/>
+        <attr name="name" type="name" required="true" label="名称"/>
+        <attr name="data" type="article" required="true" label="数据"/>
+        <attr name="type" type="int" required="true" label="类型"/>
+		<oper role="shop" name="create_discuss" page="店铺管理-讨论主题资源" type="union_insert" label="添加讨论资源">
+            data: {
+                resources.resource_id: {
+                    shop_id: token.shop_id, name: name, data: data, type: type
+                },
+                discuss_theme.discuss_theme_id: {
+                    title: title, content: content, sort: sort, resource_id: [resource_id]
+                }
+            }
+        </oper>
+        <oper role="shop" page="店铺管理-试题资源" name="excel_topic" type="aftertreatment" label="上传单个题目excel">
+            data: {util: FileUtil.import_exercises}
+        </oper>
+        <oper role="client" name="get" page="店铺管理-活动,考试测验,课程详情页面,项目式课后习题页面,视频学习页面,项目式视频学习页面" type="first" label="资源详情">
+            data: {id: id, shop_id: shop_id, name: name, data: data, type: type},
+            with: {id: id}
+        </oper>
+		<oper role="shop" name="shop_search" page="店铺管理-文档资源,视频学习页面" type="search" label="查询资源列表">
+			data: {id: id, shop_id: shop_id, name: name, data: data, type: type},
+			with: {
+                shop_id: token.shop_id,
+                name: [like, name],
+                id: id,
+                type: type
+            }
+		</oper>
+        <oper role="shop" name="shop_search_not_data" type="search" label="查询资源列表不返回data">
+			data: {id: id, shop_id: shop_id, name: name, type: type},
+			with: {
+                shop_id: token.shop_id,
+                name: [like, name],
+                id: id,
+                type: type
+            }
+		</oper>
+		<oper role="shop" name="shop_create" page="店铺管理-课后习题(简答题),店铺管理-音频资源,店铺管理-文档资源,店铺管理-试题资源,店铺管理-图片资源,店铺管理-项目式产品列表,店铺管理-产品列表,店铺管理-视频资源" type="insert" label="新增资源">
+			data: {shop_id: token.shop_id, name: name, data: data, type: type}
+		</oper>
+		<oper role="shop" name="shop_edit" page="店铺管理-课后习题(简答题),店铺管理-音频资源,店铺管理-文档资源,店铺管理-试题资源,店铺管理-图片资源,店铺管理-视频资源" type="update" label="更新资源">
+			data: {name: name, data: data, type: type},
+			with: {id: id}
+		</oper>
+        <oper role="shop" name="shop_get" type="first" label="资源详情">
+            data: {shop_id: shop_id, name: name, data: data, type: type},
+            with: {id: id}
+        </oper>
+		 <oper role="shop" name="delete" page="店铺管理-课后习题(简答题),店铺管理-音频资源,店铺管理-文档资源,店铺管理-试题资源,店铺管理-图片资源,店铺管理-视频资源" type="delete" label="删除资源">
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="activities" time="true" label="活动管理">
+        <attr name="shop_id" type="key" table="shops" required="true" label="所属店铺ID"/>
+        <attr name="name" required="true" type="text" label="名称"/>
+        <attr name="desc" type="article" label="详情"/>
+        <attr name="resources" type="json" label="资源集合"/>
+        <attr name="sort" type="int" label="排序"/>
+        <attr name="icon_type_id" type="key" table="icon_type" label="图标类型"/>
+        <attr name="id_delete" type="int" label="state"/>
+		<oper role="client" name="get" type="first" label="活动详情">
+            data: {shop_id: shop_id, name: name, desc: desc, resources: resources},
+            with: { id: id }
+        </oper>
+		<oper role="shop" name="search" page="店铺管理-活动" type="search" label="查询活动列表">
+			data:{
+                id: id,
+				shop_id: shop_id,
+				name: name,
+                desc: desc,
+				resources: resources,
+                icon_type_id: {
+                    icon.icon_type_id: {
+                        file_name: file_name,
+                        type: type
+                    }
+                }
+			},
+			with: {
+                name: [like, name], icon.state: icon_state, shop_id: shop_id
+            },
+            order: {sort: desc}
+		</oper>
+		<oper role="shop" name="create" page="店铺管理-活动" type="insert" lable="新增活动">
+			data:{
+				shop_id: token.shop_id,
+				name: name,
+				desc: desc,
+				resources: resources,
+                sort: sort,
+                icon_type_id: icon_type_id
+			}
+		</oper>
+		<oper role="shop" name="edit" page="店铺管理-活动" type="update" label="修改活动">
+			data:{
+				shop_id: shop_id,
+				name: name,
+				desc: desc,
+				resources: resources,
+                sort: sort,
+                icon_type_id: icon_type_id
+			},
+			with:{
+				id: id
+			}
+		</oper>
+		<oper role="shop" name="delete" page="店铺管理-活动" type="delete" label="删除活动">
+			with:{id: id}
+		</oper>
+        <oper role="shop" name="shop_edit" page="店铺管理-活动" type="update" label="修改章节">
+			data:{
+				resources: resources
+			},
+			with:{
+				id: id
+			}
+		</oper>
+    </entity>
+    <entity name="task_activities" label="任务活动关联表">
+        <attr name="task_id" type="key" table="tasks" label="任务ID"/>
+        <attr name="activity_id" type="key" table="activities" label="活动ID"/>
+        <attr name="sort" type="int" label="排序"/>
+        <oper role="shop" label="任务活动关联" name="delete" page="店铺管理-项目" type="delete" label="删除任务里的活动">
+            with: {id: id}
+        </oper>
+        <oper role="shop" label="任务活动关联" name="update" page="店铺管理-产品列表" type="update" label="更新任务里的活动">
+            data: {activity_id: activity_id},
+            with: {task_id: task_id}
+        </oper>
+        <oper role="shop" label="任务活动关联" name="create" type="cover_insert" label="任务添加活动并且覆盖之前的活动">
+        </oper>
+        <oper role="shop" label="任务活动关联" name="create_one" page="店铺管理-项目" type="insert" label="添加一条任务活动关联">
+            data: {task_id: task_id, activity_id: activity_id, sort: sort}
+        </oper>
+        <oper role="shop" label="任务活动关联" name="search" page="店铺管理-项目" type="search" label="获取任务里的活动">
+            data: {
+                id: id,
+                sort: sort,
+                activity_id: {
+                    id: activitie_id,
+                    name: activitie_name,
+                    resources: resources
+                },
+                task_id: {
+                    id: task_id,
+                    name: task_name
+                },
+                sort: sort
+            },
+            with: {
+                id: id,
+                task_id: task_id,
+                activity_id: activity_id
+            }
+        </oper>
+    </entity>
+    <entity name="tasks" time="true" label="课程任务">
+        <attr name="shop_id" type="key" table="shops" required="true" label="所属店铺ID"/>
+        <attr name="name" type="name" required="true" label="名称"/>
+        <attr name="desc" type="article" label="详情"/>
+        <attr name="start_date_time" type="date" label="开始时间"/>
+        <attr name="end_date_time" type="date" label="结束时间"/>
+        <attr name="id_delete" type="int" label="state"/>
+		<oper role="shop" name="create" type="insert" label="新增课程任务">
+			data: {
+				shop_id: shop_id,
+				name: name,
+				desc: desc
+			}
+		</oper>
+		<oper role="shop" page="店铺管理-项目" name="edit" type="update" label="更新课程任务">
+			data: {
+				name: name,
+				desc: desc,
+                start_date_time:start_date_time,
+                end_date_time:end_date_time
+			},
+			with:{
+				id: id
+			}
+		</oper>
+        <oper role="shop" name="get" type="first" label="获取课程任务">
+			data: {name: name, desc: desc},
+			with:{id: id}
+		</oper>
+		<oper role="shop" name="delete" type="delete" label="删除课程任务">
+			with:{
+				id: id
+			}
+		</oper>
+        <oper role="shop" name="shop_search" type="search" label="查询课程任务">
+            data: {
+                id: id,
+                shop_id: shop_id,
+				name: name,
+				desc: desc
+            },
+            with: {
+                name: [like, name]
+            }
+        </oper>
+    </entity>
+    <entity name="project_tasks" label="项目任务关联表">
+        <attr name="project_id" type="key" table="projects" label="项目ID"/>
+        <attr name="task_id" type="key" table="tasks" label="任务ID"/>
+        <attr name="sort" type="key" label="排序"/>
+        <oper role="client" name="search_group_by_task" page="项目式课程详情,项目式学习页面,店铺管理-项目式产品列表,项目式视频学习页面,店铺管理-项目" type="search" label="获取项目任务">
+            data: {
+                sort: sort,
+                task_id: {
+                    id: task_id,
+                    name: task_name,
+                    desc: task_desc,
+                    start_date_time: start_date_time,
+                    end_date_time: end_date_time,
+                    items.task_activities.task_id: {
+                        activity_id: {
+                            desc: activitie_desc,
+                            name: activitie_name,
+                            resources: resources,
+                            icon_type_id: {
+                                icon.icon_type_id: {
+                                    file_name: file_name,
+                                    name: name
+                                }
+                            }
+                        },   
+                        sort: activite_sort
+                    }
+                }
+            },
+            with: {
+                project_id: project_id
+            },
+            order: { sort: asc}
+        </oper>
+        <oper role="client" page="项目任务" name="search" type="search" label="获取项目任务">
+            data: {
+                id: id,
+                sort: sort,
+                task_id: {
+                    id: task_id,
+                    name: task_name,
+                    task_activities.task_id: {
+                        activity_id: {
+                            resources: resources
+                        }   
+                    }
+                }
+            },
+            with: {
+                project_id: project_id
+            },
+            order: { sort: asc}
+        </oper>
+        <oper role="client" page="店铺管理-项目" name="search_no_activity" type="search" label="获取项目任务不查出活动">
+            data: {
+                id: id,
+                sort: sort,
+                task_id: {
+                    id: task_id,
+                    name: task_name,
+                    desc: task_desc,
+                    start_date_time: task_start_study_time,
+                    end_date_time: task_end_study_time
+                }
+            },
+            with: {
+                project_id: project_id
+            },
+            order: { sort: asc}
+        </oper>
+        <oper role="shop" page="项目任务"  name="create_product_task" type="indirect_insert" label="增加产品任务"></oper>
+        <oper role="shop" page="项目任务" name="create" type="union_insert" label="增加项目任务">
+            data: {
+                tasks.task_id: {
+                    name: task_name,
+                    desc: task_desc,
+                    start_date_time: task_start_study_time,
+                    end_date_time: task_end_study_time
+                },
+                project_tasks.project_tasks_id: {
+                    project_id: project_id,
+                    task_id: [task_id],
+                    sort: project_tasks_sort
+                },
+                sort: sort
+            }
+        </oper>
+        <oper role="shop" page="店铺管理-项目" name="delete" type="delete" label="删除项目任务">
+            with: { id: id}
+        </oper>
+        <oper role="shop" page="项目任务" name="edit" type="update" label="更新项目任务">
+            data: {
+                task_id: task_id, 
+                sort: sort
+            },
+            with: {
+                id: id
+            }
+        </oper>
+    </entity>
+    <entity name="projects" time="true" label="项目">
+        <attr name="shop_id" type="key" table="shops" required="true" label="所属店铺ID"/>
+        <attr name="name" type="name" required="true" label="名称"/>
+        <attr name="desc" type="article" required="true" label="描述"/>
+        <attr name="start_time" type="date" label="项目开始时间"/>
+        <attr name="end_time" type="date" label="项目结束时间"/>
+        <attr name="label_id" type="key" table="labels" label="标签id"/>
+        <attr name="onsale" type="int" label="是否上架"/>
+        <attr name="sponsor" type="name" label="主办单位"/>
+        <attr name="organizer" type="name" label="协办单位"/>
+        <attr name="period" type="int" label="学时"/>
+        <attr name="start_stydy_time" type="date" label="开始培训时间"/>
+        <attr name="end_study_time" type="date" label="结束培训时间"/>
+        <attr name="prportion" type="int" label="辅导员评分比例"/>
+        <oper name="search" page="项目式课程详情,项目式课程学习,项目式课程主页,项目式观看视频" type="first" label="获取资源列表">
+            data: {
+                id: id,
+                name: name,
+                start_time: start_time,
+                end_time: end_time,
+                onsale: onsale,
+                desc: desc,
+                sponsor: sponsor,
+                label_id: {
+                    name: label_name
+                },
+                organizer: organizer,
+                period: period,
+                start_stydy_time: start_stydy_time,
+                end_study_time: end_study_time,
+                project_tasks.project_id: {
+                    project_id: project_id,
+                    task_id: {
+                        task_activities.task_id: {
+                            activity_id: {
+                                resources: resources
+                            }
+                        }
+                    }
+                }
+            },
+            with: {id: id}
+        </oper>
+		<oper name="create" page="店铺管理-项目" role="shop" type="insert" label="增加项目">
+			data:{
+				shop_id: token.shop_id,
+				name: name,
+				desc: desc,
+                start_time: start_time,
+                end_time: end_time,
+                onsale: onsale,
+                label_id: label_id,
+                sponsor: sponsor,
+                organizer: organizer,
+                period: period,
+                start_stydy_time: start_stydy_time,
+                end_study_time: end_study_time,
+                prportion: prportion
+			}
+		</oper>
+		<oper name="edit" page="店铺管理-项目" role="shop" type="update" label="更新项目">
+			data:{
+				name: name,
+				desc: desc,
+                start_time: start_time,
+                end_time: end_time,
+                onsale: onsale,
+                sponsor: sponsor,
+                label_id: label_id,
+                organizer: organizer,
+                period: period,
+                start_stydy_time: start_stydy_time,
+                end_study_time: end_study_time,
+                prportion: prportion
+			},
+			with:{
+				id: id
+			}
+		</oper>
+		<oper name="delete" page="店铺管理-项目" role="shop" type="delete" label="删除项目">
+			with:{id: id}
+		</oper>
+        <oper name="shop_search" page="店铺管理-班级管理" role="shop" type="search" label="获取店铺项目列表">
+            data: {
+                id: id,
+                name: name,
+				desc: desc,
+                start_time: start_time,
+                end_time: end_time,
+                onsale: onsale,
+                prportion: prportion,
+                label_id: {
+                    id: label_id,
+                    name: label_name
+                },
+                sponsor: sponsor,
+                organizer: organizer,
+                period: period,
+                start_stydy_time: start_stydy_time,
+                end_study_time: end_study_time
+            },
+            with: {shop_id: token.shop_id, name: [like, name], label_id: label_id, sponsor: [like,sponsor]},
+            order: {id: desc}
+        </oper>
+    </entity>
+    <entity name="shopping_cart" label="购物车">
+		<attr name="product_id" type="key" table="products" required="true" label="产品ID"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+		<attr name="selected" type="bool" default="0" label="是否选中"/>
+		<attr name="user_id" type="key" table="users" label="所有者ID"/>
+        <oper role="client" name="create" type="insert" label="加入购物车" page="项目式课程详情,课程介绍">
+            data: {
+                user_id: token.id,
+                product_id: product_id,
+                selected: CONSTANT.0,
+                shop_id: shop_id
+            }
+        </oper>
+		<oper role="client" name="search" type="search" label="购物车列表" page="项目式课程详情,课程介绍,下单,购物车,头部,店铺管理-成员管理">
+            data: {
+                id: id,
+                product_id: {
+                    id: product_id,
+                    name: product_name,
+                    desc: product_desc,
+                    price: product_price,
+                    image: product_image,
+                    shop_id: {
+                        name: shop_name
+                    }
+                },
+                selected: selected,
+                user_id: user_id
+                },
+            with: {user_id: token.id, shop_id: shop_id},
+            order: {id: desc}
+        </oper>
+		<oper role="client" name="edit" type="update" label="取消选中购物车" page="项目式购物车">
+            data: {selected: selected},
+            with: {id: id}
+        </oper>
+		<oper role="client" name="delete" type="delete" label="删除购物车" page="项目式购物车,立即下单">
+            with: {id: id}
+        </oper>
+	</entity>
+    <entity name="product_labels" label="产品标签">
+        <attr name="product_id" type="key" table="products" label="产品ID"/>
+        <attr name="label_id" type="key" table="labels" label="标签ID"/>
+        <oper name="listLabels" page="店铺管理-项目式产品列表" type="search" label="产品对应的标签">
+            data: {id: id, product_id: product_id, label_id: label_id},
+            with: {product_id: product_id}
+        </oper>
+		<oper name="listProducts" page="项目式搜索页面" type="search" label="标签下的产品列表">
+            data: {
+                id: id,
+                product_id: {
+                    id: product_id,
+                    attr: attr,
+                    is_auth: is_auth,
+                    name: name,
+                    period: period,
+                    teacher: teacher,
+                    image: image,
+                    price: price,
+                    cer_year: cer_year,
+                    is_project: is_project,
+                    project_id: {
+                        desc: project_desc
+                    },
+                    shop_id: {
+                        id: shop_id,
+                        name: shop_name
+                    }
+                },
+                label_id: label_id
+                },
+            with: {label_id: label_id, products.attr: attr, products.is_auth: is_auth, products.cer_year: cer_year, shops.id: shop_id, products.name: [like, name], products.onsale: onsale},
+            groupBy: {product_id: product_id}
+        </oper>
+        <oper role="shop" name="edit" page="店铺管理-项目式产品管理" type="update" label="更新产品标签">
+            data: {label_id: label_id},
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="delete" page="产品标签" type="delete" label="删除产品标签">
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="id_list" page="产品标签" type="search" label="根据label_id查找对应的id">
+            data: {id: id},
+            with: {label_id: label_id}
+        </oper>
+        <oper role="shop" name="delete_id" page="产品标签" type="delete" label="根据id删除产品标签">
+            withIn: {id: id_arr}
+        </oper> 
+    </entity>
+    <entity name="products" time="true" label="产品管理">
+        <attr name="shop_id" type="int" table="shops" label="店铺ID"/>
+        <attr name="project_id" type="key" table="projects" label="对应的项目ID"/>
+        <attr name="name"  type="name" required="true" label="名称"/>
+        <attr name="desc" type="article" label="介绍"/>
+        <attr name="period" type="name" label="学时"/>
+        <attr name="teacher" type="name" label="教师"/>
+        <attr name="teacher_intro" type="text" label="教师介绍"/>
+        <attr name="image" type="image" label="封面"/>
+        <attr name="price" type="money" default="0" label="价格"/>
+        <attr name="onsale" type="bool" default="0" label="是否上架"/>
+        <attr name="is_auth" type="bool" default="0" label="是否认证"/>
+        <attr name="attr" type="name" label="课程属性"/>
+        <attr name="cer_year" type="name" label="认证年度"/>
+        <attr name="cer_industry" type="name" label="认证行业"/>
+        <attr name="is_project" type="int" label="是否是项目式"/>
+        <attr name="year" type="int" label="年度"/>
+        <attr name="created_at" label="创建时间"/>
+        <oper name="update_activity" type="aftertreatment" label="更新产品活动，只适用课程云">
+            data: {
+                util: ProductsUtil.update_activity
+            }
+        </oper>
+        <oper name="get_activities_by_product_id" type="first" label="根据产品id获取活动">
+            data: {
+                project_id: {
+                    project_tasks.project_id: {
+                        task_id: {
+                            id: task_id,
+                            items.task_activities.task_id: {
+                                activity_id: {
+                                    id: activity_id,
+                                    name: activitie_name,
+                                    resources: resources
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            with: {id: id}
+        </oper>
+        <oper page="商品管理" role="shop" name="set_many_onsale" type="update" label="批量上下架">
+            data: {onsale: onsale},
+			withIn:{id: id_arr}
+		</oper>
+        <oper page="商品管理" role="shop" name="copyProduct" type="aftertreatment" label="复制产品到指定店铺">
+            data: {util: ProductsUtil.copyProduct}
+        </oper>
+        <oper name="get_banner_img" type="aftertreatment" label="获取轮播图">
+            data: {
+                util: ProductsUtil.get_banner_img
+            },
+            with: {shop_id: shop_id}
+        </oper>
+        <oper name="get_task_by_product_id" type="search" label="获取产品任务,任务里面有活动">
+            data: {
+                project_id: {
+                    project_tasks.project_id: {
+                        project_id: project_id,
+                        task_id: {
+                            id: task_id,
+                            name: task_name,
+                            desc: task_desc,
+                            task_activities.task_id: {
+                                activity_id: {
+                                    id: activitie_id,
+                                    name: activitie_name,
+                                    desc: activitie_desc
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            with: {id: id}
+        </oper>
+        <oper name="get" type="first" label="产品详情" page="项目式课程详情,课程学习,观看视频,立即下单,支付页面,购物车">
+            data: {
+                id: id,
+                name: name, 
+                desc: desc, 
+                image: image, 
+                price: price, 
+                period: period,
+                project_id: project_id,
+                teacher: teacher, 
+                teacher_intro: teacher_intro,
+                onsale: onsale,
+                is_auth: is_auth,
+                attr: attr,
+                cer_year: cer_year,
+                cer_industry: cer_industry,
+                is_project: is_project,
+                shop_id: {
+                    name: shop_name
+                }
+            },
+            with: { id: id, onsale: onsale}
+        </oper>
+        <oper name="get_pay" type="first" label="产品详情">
+            data: {
+                id: id,
+                name: name, 
+                desc: desc, 
+                image: image, 
+                price: price, 
+                period: period,
+                project_id: project_id,
+                teacher: teacher, 
+                teacher_intro: teacher_intro,
+                onsale: onsale,
+                is_auth: is_auth,
+                attr: attr,
+                cer_year: cer_year,
+                cer_industry: cer_industry,
+                shop_id: {
+                    name: shop_name
+                },
+                purchased.product_id: {
+                    id: purchased_id,
+                    order_id: {
+                        owner_id: owner_id
+                    }
+                }
+            },
+            with: { id: id, orders.owner_id: token.id, onsale: onsale}
+        </oper>
+		<oper name="search" type="search" label="查询产品" page="项目式课程搜索,标签搜索,店铺管理-板块管理,cz管理,成员管理,批量选课">
+            data: {
+                id: id,
+                name: name, 
+                desc: desc, 
+                image: image, 
+                price: price, 
+                period: period, 
+                project_id: project_id,
+                teacher: teacher, 
+                teacher_intro: teacher_intro,
+                onsale: onsale,
+                is_auth: is_auth,
+                attr: attr,
+                cer_year: cer_year,
+                cer_industry: cer_industry,
+                is_project: is_project,
+                shop_id: {
+                    name: shop_name
+                }
+            },
+            with: {shop_id: shop_id, name: [like, name], onsale: onsale,is_auth: is_auth, cer_year: cer_year, attr: attr, onsale: onsale}
+        </oper>
+		<oper page="店铺管理-班级管理,项目式产品列表,项目包管理" role="shop" name="shop_search" type="search" label="查询产品">
+            data: {
+                id: id,
+                name: name, 
+                desc: desc, 
+                image: image, 
+                price: price, 
+                period: period, 
+                project_id: project_id,
+                is_project: is_project,
+                teacher: teacher, 
+                teacher_intro: teacher_intro,
+                onsale: onsale,
+                is_auth: is_auth,
+                attr: attr,
+                cer_year: cer_year,
+                cer_industry: cer_industry,
+                created_at: created_at,
+                shop_id: {
+                    name: shop_name
+                },
+                product_labels.product_id: {
+                    label_id: {
+                        id: label_id,
+                        name: label_name
+                    }
+                }
+            },
+            with: {
+                   shop_id: token.shop_id, 
+                   is_project: is_project,
+                   name: [like, name], 
+                   teacher: [like, teacher], 
+                   onsale: onsale, 
+                   is_auth: is_auth,
+                   cer_year: cer_year,
+                   attr: attr,
+                   created_at: [like,created_at],
+                   labels.id: label_id
+                 },
+            groupBy: {id: id}
+        </oper>
+        <oper page="店铺管理-项目式产品列表,板块管理" role="shop" name="create" type="union_insert" label="增加产品自动关联项目，任务，标签">
+            data: {
+                projects.project_id: {
+                    name: name,
+                    shop_id: token.shop_id,
+                    desc: desc
+                },
+                products.product_id: {
+                    name: name,
+                    desc: desc,
+                    image: image,
+                    price: price,
+                    project_id: [project_id],
+                    period: period,
+                    teacher: teacher,
+                    teacher_intro: teacher_intro,
+                    onsale: onsale,
+                    is_auth: is_auth,
+                    attr: attr,
+                    cer_year: cer_year,
+                    cer_industry: cer_industry,
+                    shop_id: token.shop_id,
+                    is_project: CONSTANT.0
+                },
+                product_labels.product_labels_id: {
+                    product_id: [product_id],
+                    label_id: label_id
+                },
+                tasks.task_id: {
+                    name: name,
+                    shop_id: token.shop_id,
+                    desc: desc
+                },
+                project_tasks.project_task_id: {
+                    project_id: [project_id],
+                    task_id: [task_id]
+                },
+                task_activities.task_activities_id: {
+                    task_id: [task_id],
+                    activity_id: activity_id
+                }
+            }
+        </oper>
+        <oper page="店铺管理-项目式产品列表" role="shop" name="create_product" type="union_insert" label="增加商品">
+			data:{
+                products.product_id: {
+                    name: name, 
+                    desc: desc, 
+                    image: image, 
+                    price: price,
+                    project_id: project_id,
+                    period: period, 
+                    teacher: teacher, 
+                    teacher_intro: teacher_intro,
+                    onsale: onsale,
+                    is_auth: is_auth,
+                    attr: attr,
+                    cer_year: cer_year,
+                    cer_industry: cer_industry,
+                    shop_id: token.shop_id,
+                    is_project: CONSTANT.1
+                },
+                product_labels.product_label_id: {
+                    product_id: [product_id],
+                    label_id: label_id
+                }
+			}
+		</oper>
+		<oper page="店铺管理-项目式产品列表" role="shop" name="edit" type="update" label="更新商品">
+			data:{
+				name: name, 
+                desc: desc, 
+                image: image, 
+                price: price,
+				project_id: project_id,
+                period: period, 
+                teacher: teacher, 
+                teacher_intro: teacher_intro,
+                onsale: onsale,
+                is_auth: is_auth,
+                attr: attr,
+                cer_year: cer_year,
+                cer_industry: cer_industry
+			},
+			with:{
+				id: id
+			}
+		</oper>
+        <oper page="商品管理" role="shop" name="shop_get" type="first" label="产品详情">
+            data: {
+                name: name, 
+                desc: desc, 
+                image: image, 
+                price: price, 
+                period: period, 
+                teacher: teacher, 
+                teacher_intro: teacher_intro,
+                onsale: onsale,
+                is_auth: is_auth,
+                attr: attr,
+                cer_year: cer_year,
+                cer_industry: cer_industry,
+                shop_id: {
+                    name: shop_name
+                }
+            },
+            with: { id: id }
+        </oper>
+        <oper page="店铺管理-项目式产品列表" role="shop" name="shop_delete" type="delete" label="删除商品">
+			with:{id: id}
+		</oper>
+    </entity>
+    <entity name="shops" time="true" label="店铺管理">
+        <attr name="name" required="true" label="名称"/>
+        <attr name="owner_id" type="key" table="users" required="true" label="所有者ID"/>
+        <attr name="state" type="int" default="0" required="true" label="状态"/>
+        <attr name="is_project" type="int" lable="是否是项目式店铺"/>
+        <attr name="url" type="text" lable="域名"/>
+        <attr name="platform_name" type="name" label="平台名称"/>
+        <attr name="mechanism_name" type="name" label="机构名称"/>
+        <attr name="region" type="name" label="平台所属区域"/>
+        <attr name="is_invoice" type="int" label="是否有网上开发票功能,0是无，1是有"/>
+        <attr name="agreement" type="text" label="注册协议"/>
+        <attr name="is_cer" type="int" label="是否可生成学时证明"/>
+        <attr name="logo_header_file_name" type="name" label="平台上方logo"/>
+        <attr name="logo_footer_file_name" type="name" label="平台下方logo"/>
+        <attr name="customer" type="text" label="客服信息"/>
+        <attr name="customer2" type="text" label="客服信息-支付页面"/>
+        <attr name="footer" type="text" label="页脚信息"/>
+        <attr name="alipay" type="text" label="支付宝支付信息"/>
+        <attr name="wxpay" type="text" label="微信支付信息"/>
+        <attr name="unionpay" type="text" label="银行支付信息"/>
+        <attr name="is_auth" type="int" label="是否认定，0是无，1是有"/>
+        <attr name="marquee" type="text" label="跑马灯"/>
+        <attr name="title" type="name" label="店铺标题"/>
+        <attr name="sidebar_type" type="int" label="店铺侧边栏风格，0典型课程云风格，1项目式风格"/>
+        <attr name="is_order" type="int" label="是否需要我的订单：0是不需要，1是需要"/>
+        <attr name="is_shoppingcart" type="int" label="是否需要购物车 0是不需要，1是需要" />
+        <oper name="get" type="first" label="店铺详情" page="项目式头部">
+            data: {
+                id: id,
+                name: name, 
+                owner_id: owner_id,
+                state: state,
+                is_project: is_project,
+                platform_name: platform_name,
+                mechanism_name: mechanism_name,
+                region: region,
+                is_invoice: is_invoice,
+                agreement: agreement,
+                is_cer: is_cer,
+                logo_header_file_name: logo_header_file_name,
+                logo_footer_file_name: logo_footer_file_name,
+                customer2: customer2,
+                customer: customer,
+                footer: footer,
+                alipay: alipay,
+                wxpay: wxpay,
+                unionpay: unionpay,
+                is_auth: is_auth,
+                marquee: marquee,
+                title: title,
+                sidebar_type: sidebar_type,
+                is_order: is_order,
+                is_shoppingcart: is_shoppingcart,
+                url: url
+            },
+            with: {url: url}
+		</oper>
+		<oper role="admin" name="search" type="search" label="查询店铺列表">
+			data: {name: name, state: state}
+		</oper>
+		<oper role="admin" name="create" type="insert" label="新增店铺">
+			data: {name: name, state: state}
+		</oper>
+        <oper page="店铺信息管理" name="shop_create" type="insert" label="新增一个店铺">
+            data: {
+                name: name, 
+                owner_id: owner_id,
+                state: state,
+                is_project: is_project,
+                platform_name: platform_name,
+                mechanism_name: mechanism_name,
+                region: region,
+                is_invoice: is_invoice,
+                agreement: agreement,
+                is_cer: is_cer,
+                logo_header_file_name: logo_header_file_name,
+                logo_footer_file_name: logo_footer_file_name,
+                customer2: customer2,
+                customer: customer,
+                footer: footer,
+                alipay: alipay,
+                wxpay: wxpay,
+                unionpay: unionpay,
+                is_auth: is_auth,
+                marquee: marquee,
+                title: title,
+                sidebar_type: sidebar_type,
+                is_order: is_order,
+                is_shoppingcart: is_shoppingcart
+            }
+        </oper>
+        <oper page="店铺信息管理" name="shop_search" type="search" label="查询所有店铺列表">
+            data: {
+                id: id,
+                name: name,
+                owner_id: {
+                    name: user_name,
+                    company: user_company,
+                    phone: user_phone
+                },
+                is_project: is_project,
+                url: url,
+                platform_name: platform_name,
+                mechanism_name: mechanism_name,
+                region: region,
+                is_invoice: is_invoice,
+                agreement: agreement,
+                is_cer: is_cer,
+                logo_header_file_name: logo_header_file_name,
+                logo_footer_file_name: logo_footer_file_name,
+                customer2: customer2,
+                customer: customer,
+                footer: footer,
+                alipay: alipay,
+                wxpay: wxpay,
+                unionpay: unionpay,
+                is_auth: is_auth,
+                marquee: marquee,
+                title: title,
+                sidebar_type: sidebar_type,
+                is_order: is_order,
+                is_shoppingcart: is_shoppingcart
+            },
+            with: {
+                name: [like, name]
+            }
+        </oper>
+        <oper page="店铺信息管理" name="shop_edit" type="update" label="修改店铺信息">
+			data: {
+                name: name, 
+                owner_id: owner_id,
+                state: state,
+                is_project: is_project,
+                platform_name: platform_name,
+                mechanism_name: mechanism_name,
+                region: region,
+                is_invoice: is_invoice,
+                agreement: agreement,
+                is_cer: is_cer,
+                logo_header_file_name: logo_header_file_name,
+                logo_footer_file_name: logo_footer_file_name,
+                customer2: customer2,
+                customer: customer,
+                footer: footer,
+                alipay: alipay,
+                wxpay: wxpay,
+                unionpay: unionpay,
+                is_auth: is_auth,
+                marquee: marquee,
+                title: title,
+                sidebar_type: sidebar_type,
+                is_order: is_order,
+                is_shoppingcart: is_shoppingcart
+            },
+			with: {id: id}
+		</oper>
+        <oper page="店铺信息管理" name="shop_delete" type="delete" label="删除一个店铺">
+            with: {id: id}
+        </oper>
+        <oper name="get_url" type="first" label="查询店铺信息">
+			data: {id: id, name: name, is_shoppingcart: is_shoppingcart},
+			with: {url: url}
+		</oper>
+        <oper name="get_shopid" type="first" label="查询店铺信息">
+			data: {owner_id: owner_id, name: name, platform_name: platform_name, is_shoppingcart: is_shoppingcart, is_project: is_project},
+			with: {id: id}
+		</oper>
+    </entity>
+    <entity name="orders" time="true" label="订单管理">
+        <attr name="owner_id" type="key" table="users" required="true" label="买家ID"/>
+        <attr name="pay_type" type="int" required="true" label="支付方式,1:支付宝,2:微信,3:批量开课,4:银联,5:账号余额"/>
+        <attr name="state" type="int" default="0" required="true" default="0" label="状态"/>
+        <attr name="total" type="money" default="0" label="付款总额"/>
+        <attr name="invoice_title" type="name" label="发票抬头"/>
+        <attr name="tax_no" type="name" label="税号"/>
+        <attr name="invoice_type" type="name" label="发票类型"/>
+        <attr name="invoice_email" type="email" label="邮箱"/>
+        <attr name="invoice_address" type="address" label="地址"/>
+        <attr name="out_trade_no" type="url" label="交易号"/>
+        <attr name="code" type="url" label="订单号"/>
+        <attr name="pay_date" type="datetime" label="支付时间"/>
+        <attr name="cancel_date" type="datetime" label="取消时间"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <attr name="invoice_state" type="int"  label="开票状态 0：未开票 1：开票中 2：已开票" default="0"/>
+        <oper role="client" name="unionpay" type="aftertreatment" label="银联支付">
+            data: { util: UpacpUtil.upacp_pay}
+        </oper>
+        <oper role="client" name="unionpay_call_back" type="aftertreatment" label="银联回调">
+            data: { util: UpacpUtil.upacp_call_back}
+        </oper>
+		<oper role="admin" name="searchAdmin" type="first" label="管理">
+			data:{
+				owner_id: owner_id, 
+                state: state, 
+                total: total, 
+                invoice_title: invoice_title, 
+                tax_no: tax_no, 
+                code: code,
+                created_at: created_at,
+                pay_date: pay_date,
+                cancel_date: cancel_date
+			},
+			with:{
+				
+			}
+		</oper>
+        <oper page="店铺管理-发票" role="shop" name="export_excel" type="export_excel" label="导出订单excel">
+            data: { 
+                owner_id: {
+                    name: "用户名",
+                    idcard: "身份证号",
+                    phone: "地址电话"
+                }, 
+                state: "订单状态", 
+                total: "开具金额", 
+                pay_type: "支付类型", 
+                invoice_title: "发票抬头", 
+                tax_no: "纳税识别号", 
+                invoice_type: "发票类型",
+                invoice_email: "邮箱地址",
+                invoice_address: "地址"
+            },
+            withNotNull: {invoice_title: invoice_title_not_null},
+            withNotIn: {invoice_title: invoice_title_not_in},
+            withIn: {id: ids}
+        </oper>
+        <oper role="client" name="create" type="insert_items2" label="提交订单" page="项目式课程介绍,介绍,下单页面">
+            data: {
+                owner_id: token.id,
+                pay_type: pay_type, 
+                invoice_title: invoice_title,
+                tax_no: tax_no,
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                total: STA_SUM.products.price,
+                code: GEN_CODE,
+                shop_id: shop_id,
+                items.products.purchased.order_id: {
+                    id: product_id,
+                    name: product_name,
+                    price: price
+                }
+            },
+            with: {
+               
+            }
+        </oper>
+        <oper role="shop" name="selected_create" type="batch_pay_one_to_many" label="选课提交订单" page="店铺管理-成员管理">
+            data: {
+                owner_id: user_id,
+                pay_type: pay_type, 
+                invoice_title: invoice_title,
+                tax_no: tax_no,
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                total: STA_SUM.products.price,
+                code: GEN_CODE,
+                state: state,
+                pay_date: pay_date,
+                items.products.purchased.order_id: {
+                    id: product_id,
+                    name: product_name,
+                    price: price
+                }
+            },
+            with: {
+               
+            }
+        </oper>
+        <oper role="shop" name="edit" type="update" label="更改开票状态" page="店铺管理-发票,确认订单信息">
+            data: {
+                invoice_state: invoice_state
+            },
+            withIn: {
+               id: ids
+            }
+        </oper>
+        <oper role="shop" name="batch_create" type="batch_pay_many_to_many" label="直接开课，多对多" page="店铺管理-成员管理,批量开课"></oper>
+		<oper role="client" name="alipay" type="alipay" label="支付宝支付">
+            with: {id: id}
+        </oper>
+		<oper name="alipay_callback" type="alipay_callback" label="支付宝支付回调">
+        </oper>
+		<oper role="client" name="wxpay" type="wxpay" label="微信支付" page="项目式确认订单信息">
+             with: {id:id}
+        </oper>
+		<oper name="wxpay_callback" type="wxpay_callback" label="微信支付回调">
+        </oper>
+        <oper role="client" name="wxpay_js" type="wxpay_js" label="js微信支付">
+             with: {id:id}
+        </oper>
+		<oper name="wxpay_js_callback" type="wxpay_js_callback" label="js微信支付回调">
+        </oper>
+		<oper role="client" name="search" type="search" label="订单列表" page="项目式课程介绍,我的订单,店铺管理-成员管理">
+            data: { 
+                id: id, 
+                owner_id: owner_id, 
+                state: state, 
+                total: total, 
+                pay_type: pay_type, 
+                pay_date: pay_date,
+                invoice_title: invoice_title, 
+                tax_no: tax_no, 
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                code: code,
+                created_at: created_at,
+                items.purchased.order_id: {
+                    product_name: product_name,
+                    product_id: {
+                        id: product_id,
+                        image: image,
+                        period: period,
+                        price: price,
+                        shop_id: {
+                            name: shop_name
+                        }
+                    }
+                }
+            },
+            with: {owner_id: token.id, state: state},
+            order: {code: desc}
+        </oper>
+        <oper page="店铺管理-成员管理" role="shop" name="searchByUserId" type="search" label="查询用户订单列表">
+            data: { 
+                id: id, 
+                owner_id: owner_id, 
+                state: state, 
+                total: total, 
+                pay_type: pay_type, 
+                invoice_title: invoice_title, 
+                tax_no: tax_no, 
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                code: code,
+                created_at: created_at
+            },
+            with: {owner_id: user_id, state: state},
+            order: {code: desc}
+        </oper>
+        <oper role="client" name="searchCourses" type="search" label="我的课程列表" page="项目式我的订单">
+            data: {
+                purchased.order_id: {
+                    product_id: product_id, 
+                    product_name: product_name, 
+                    price: price, 
+                    private: private
+                }
+            },
+            with: {owner_id: token.id, state: state}
+        </oper>
+		<oper page="项目式课程介绍,介绍,我的介绍" role="client" name="cancel" type="update" label="取消订单">
+            data: {
+                state: state,
+                cancel_date: GEN_DATE,
+                pay_date: pay_date
+            },
+            with: {id: id}
+        </oper>
+		<oper role="client" name="get" type="first" label="订单详情" page="项目式订单详情,确认订单信息,微信扫码支付页面">
+            data: {
+                id: id, 
+                state: state, 
+                total: total, 
+                pay_type: pay_type, 
+                invoice_title: invoice_title, 
+                tax_no: tax_no, 
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                code: code,
+                created_at: created_at,
+                pay_date: pay_date,
+                cancel_date: cancel_date,
+                items.purchased.order_id: {
+                    product_name: product_name,
+                    product_id: {
+                        id: product_id,
+                        period: period,
+                        price: price,
+                        image: image,
+                        shop_id: {
+                            name: shop_name
+                        }
+                    }
+                }
+            },
+            with: {id: id}
+        </oper>
+        <oper page="店铺管理-发票,订单" role="shop" name="shop_search" type="search" label="订单列表">
+            data: { 
+                id: id, 
+                owner_id: {
+                    name: user_name,
+                    idcard: idcard,
+                    phone: phone
+                }, 
+                state: state, 
+                total: total, 
+                pay_date: pay_date,
+                pay_type: pay_type, 
+                invoice_title: invoice_title, 
+                invoice_state: invoice_state,
+                tax_no: tax_no, 
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                code: code,
+                created_at: created_at
+            },
+            with: {shop_id: token.shop_id, state: state, pay_type: pay_type,
+                invoice_type: invoice_type, code: code,
+                users.name: [like, user_name],invoice_state: invoice_state,invoice_type: invoice_type},
+            withNotNull: {invoice_title: invoice_title_not_null},
+            withNotIn: {invoice_title: invoice_title_not_in}
+        </oper>
+        <oper page="订单管理" role="shop" name="shop_get" type="first" label="订单详情">
+            data: {
+                owner_id: owner_id, 
+                state: state, 
+                total: total, 
+                pay_type: pay_type, 
+                invoice_title: invoice_title, 
+                tax_no: tax_no, 
+                invoice_type: invoice_type,
+                invoice_email: invoice_email,
+                invoice_address: invoice_address,
+                code: code,
+                created_at: created_at,
+                pay_date: pay_date,
+                cancel_date: cancel_date
+            },
+            with: {id: id}
+        </oper>
+        <oper page="订单管理" name="get_money" type="first" label="根据订单号调取订单金额">
+            data: {
+                total: total
+            },
+            with: {
+                code: code
+            }
+        </oper>
+        <oper page="订单管理" name="get_money_token" type="first" label="根据本人token调取本人金额">
+            data: {
+                total: total
+            },
+            with: {
+                id: token.id
+            }
+        </oper>
+        <oper role="client" page="项目式确订单信息" name="edit_state" type="update" label="更改订单状态">
+            data: {
+                state: state,
+                pay_type: pay_type,
+                pay_date: pay_date
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="client" name="export_record" type="aftertreatment" label="导出购买记录">
+            data: {util: PurchasedUtil.export_excel}
+        </oper>
+        <oper role="client" name="upacp_pay" type="aftertreatment">
+            data: {util: UpacpUtil.upacp_pay}
+        </oper>
+        <oper name="upacp_call_back" type="aftertreatment">
+            data: {util: UpacpUtil.upacp_call_back}
+        </oper>
+    </entity>
+    <entity name="purchased" time="true" label="订单项">
+        <attr name="order_id" type="key" table="orders" label="订单ID"/>
+        <attr name="owner_id" type="key" table="users" required="true" label="买家ID"/>
+        <attr name="product_id" type="key" table="products" label="产品ID"/>
+        <attr name="product_name" type="name" label="产品名称"/>
+        <attr name="price" type="money" required="true" label="成交价格"/>
+        <attr name="score" type="int" label="得分"/>
+        <attr name="progress" type="float" label="学习进度"/>
+        <attr name="rate" type="json" label="进度"/>
+        <attr name="private" type="json" label="私有数据"/>
+        <attr name="cer_year" type="name" default="0" label="第一次进入证书页面"/>
+        <attr name="is_first" type="name" label="预设的认证年度"/>
+        <oper role="client" name="search_by_userId_and_packageId" page="项目式的项目首页" type="search" label="根据用户id和项目包id获取该用户购买该项目包的项目">
+            data: {
+                order_id: {
+                    owner_id: user_id,
+                    state: state
+                },
+                product_id: {
+                    id: product_id,
+                    name: product_name,
+                    year: product_year,
+                    project_id: {
+                        start_stydy_time: start_stydy_time,
+                        end_study_time: end_study_time
+                    },
+                    package_product.product_id: {
+                        package_id: {id: package_id}
+                    },
+                    product_labels.product_id: {
+                        label_id: {
+                            labels.id: {
+                                name: label_name,
+                                parent_id: {
+                                    name: parent_name
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            with: {orders.owner_id: token.id, package.id: package_id},
+            filter: {orders.state: 2}
+        </oper>
+        <oper role="client" name="get_rate_by_userid" page="辅导员查看学生详情页" type="search" label="辅导员根据用户id来拿订单项">
+            data: {
+                progress: progress,
+                rate: rate
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="batch_set_cer_year" page="学生批量设置年度" type="aftertreatment" label="批量设置年度">
+            data: {util: PurchasedUtil.batch_set_cer_year}
+        </oper>
+        <oper role="client" name="search" page="考试测验页面,视频学习页面,我的历史订单页面,订单详情页面" type="search" label="订单列表">
+            data: {
+                id:id,
+                product_name: product_name, 
+                price: price, 
+                private: private,
+                score: score,
+                rate: rate,
+                updated_at: updated_at,
+                created_at: created_at,
+                is_first: is_first,
+                cer_year: purchased_cer_year,
+                product_id: {
+                    id: product_id,
+                    image: image,
+                    period: period,
+                    attr: attr,
+					cer_year: cer_year,
+                    is_auth: is_auth,
+                    shop_id: {
+                        name: shop_name
+                    }
+                }
+            },
+            with: {order_id: order_id, orders.owner_id: token.id}
+        </oper>
+        <oper role="client" name="search_pay_all" page="个人中心页面课程组件,个人中心页面项目组件" type="search" label="我的所有已经购买订单项可查分数大于60和进度完成的">
+            data: {
+                id:id,
+                price: price, 
+                private: private,
+                score: score,
+                rate: rate,
+                updated_at: updated_at,
+                created_at: created_at,
+                is_first: is_first,
+                cer_year: purchased_cer_year,
+                progress: progress,
+                product_id: {
+                    id: product_id,
+                    name: product_name, 
+                    image: image,
+                    period: period,
+                    attr: attr,
+					cer_year: cer_year,
+                    is_auth: is_auth,
+                    is_project: is_project,
+                    shop_id: {
+                        name: shop_name
+                    }
+                },
+                order_id: {
+                    state: state
+                }
+            },
+            with: {
+                orders.owner_id: token.id,
+                products.attr: product_attr,
+                products.cer_year: products_cer_year,
+                products.is_auth: products_is_auth,
+                cer_year: purchased_cer_year,
+                score: [ge,score_ge],
+                progress: progress
+                },
+            filter: {orders.state: 2}
+        </oper>
+        <oper role="shop" name="shop_search_pay_all" page="cz管理页面" type="search" label="店铺查看已经购买订单项可查分数大于60和进度完成的">
+            data: {
+                id:id,
+                price: price, 
+                private: private,
+                score: score,
+                rate: rate,
+                updated_at: updated_at,
+                created_at: created_at,
+                is_first: is_first,
+                cer_year: purchased_cer_year,
+                progress: progress,
+                product_id: {
+                    id: product_id,
+                    name: product_name, 
+                    image: image,
+                    period: period,
+                    attr: attr,
+					cer_year: cer_year,
+                    is_auth: is_auth,
+                    is_project: is_project,
+                    shop_id: {
+                        name: shop_name
+                    }
+                },
+                order_id: {
+                    state: state
+                }
+            },
+            with: {
+                orders.owner_id: owner_id,
+                products.attr: product_attr,
+                products.cer_year: products_cer_year,
+                products.is_auth: products_is_auth,
+                cer_year: purchased_cer_year,
+                score: [ge,score_ge],
+                progress: progress
+                },
+            filter: {orders.state: 2}
+        </oper>
+        <oper role="client" name="search_pay_all_type_two" page="个人中心页面课程组件,个人中心页面项目组件" type="search" label="我的所有已经购买订单项可查分数小于60和进度未完成的">
+            data: {
+                id:id,
+                price: price, 
+                private: private,
+                score: score,
+                rate: rate,
+                progress: progress,
+                updated_at: updated_at,
+                created_at: created_at,
+                is_first: is_first,
+                cer_year: purchased_cer_year,
+                product_id: {
+                    id: product_id,
+                    image: image,
+                    name: product_name, 
+                    period: period,
+                    attr: attr,
+					cer_year: cer_year,
+                    is_auth: is_auth,
+                    is_project: is_project,
+                    shop_id: {
+                        name: shop_name
+                    }
+                },
+                order_id: {
+                    state: state
+                }
+            },
+            with: {
+                orders.owner_id: token.id,
+                products.attr: product_attr,
+                products.cer_year: products_cer_year,
+                products.is_auth: products_is_auth,
+                cer_year: purchased_cer_year
+            },
+            orWith: {
+                score: [lt,score_lt],
+                progress: [lt,progress_lt]
+            },
+            filter: {orders.state: 2}
+        </oper>
+		<oper role="shop" name="shop_search" page="订单管理页面, 学生管理页面" type="search" label="查询订单项">
+			data: {
+				id:id,
+                product_name: product_name, 
+                price: price, 
+                private: private,
+                score: score,
+                rate: rate,
+                updated_at: updated_at,
+                is_first: is_first,
+                product_id: {
+                    id: product_id,
+                    image: image,
+                    period: period,
+					cer_year: cer_year,
+                    is_auth: is_auth,
+                    shop_id: {
+                        name: shop_name
+                    }
+                }
+			},
+			with: {order_id: order_id}
+		</oper>
+        <oper role="client" name="sumbitResult" page="考试测验页面,课程学习页面,视频学习页面,辅导员查看学生详情页,整体学习页面" type="update" label="提交答案">
+            data: {
+                private: private,
+                score: score
+            },
+            with: {id: id}
+        </oper>
+        <oper role="client" name="sumbitRate" page="视频学习页面,项目式学习页面,辅导员查看学生详情页,整体学习页面" type="update" label="提交进度">
+            data: {
+                rate: rate,
+                progress: progress
+            },
+            with: {id: id}
+        </oper>
+        <oper role="client" name="updateCerYear" page="个人中心页面课程组件,个人中心页面项目组件,学生管理" type="update" label="修改认证年度">
+            data: {
+                is_first: is_first,
+                cer_year: cer_year
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="updateCerYears" page="cz管理页面" type="update" label="修改认证年度">
+            data: {
+                is_first: is_first,
+                cer_year: cer_year
+            },
+            withIn: {id: id_arr}
+        </oper>
+        <oper role="client" name="get_more" page="学时证明" type="search" label="根据id数组查询订单项">
+            data: {
+                id:id,
+                product_name: product_name, 
+                updated_at: updated_at,
+                is_first: is_first,
+                product_id: {
+                    id: product_id,
+                    period: period,
+                    attr: attr,
+					cer_year: cer_year
+                }
+            },
+            withIn: {id: ids}
+        </oper>
+        <oper role="client" name="get" page="个人中心页面课程组件,个人中心页面项目组件,课程学习页面,项目式学习页面,整体学习页面,学时证明管理" type="first" label="根据id查询订单项">
+            data: {
+                id:id,
+                product_name: product_name, 
+                price: price, 
+                private: private,
+                score: score,
+                rate: rate,
+                updated_at: updated_at,
+                is_first: is_first,
+                progress: progress,
+                product_id: {
+                    id: product_id,
+                    image: image,
+                    teacher: tearcher,
+                    period: period,
+                    attr: attr,
+					cer_year: cer_year,
+                    shop_id: {
+                        name: shop_name
+                    }
+                }
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="batch_set_rate" type="aftertreatment" label="直接完成人的所有课程">
+            data: {util: PurchasedUtil.batch_set_rate}
+        </oper>
+        <oper role="shop" name="czUpload" page="cz管理页面" type="aftertreatment" label="批量设置年度">
+            data: {util: PurchasedUtil.czUpload}
+        </oper>
+        <oper role="shop" name="get_image" page="学时证明管理" type="aftertreatment" label="获取图片文件名数组">
+            data: {util: ImageUtil.getCerImg},
+            with: {user_id: user_id}
+        </oper>
+        <oper role="client" name="get_records" page="获取购买记录" type="search" label="获取购买记录">
+            data: {
+                product_id: {
+                    name: product_name,
+                    product_labels.product_id: {
+                        label_id: {
+                            name: label_name
+                        }
+                    }
+                },
+                order_id: {
+                    id: id,
+                    state: state,
+                    total: total,
+                    pay_type: pay_type,
+                    code: code,
+                    owner_id: {
+                        id: user_id,
+                        name: user_name,
+                        idcard: user_idcard,
+                        phone: phone
+                    }
+                }
+            },
+            with: {
+                orders.shop_id: shop_id,
+                id: id,
+                orders.pay_type: pay_type,
+                orders.state: state,
+                labels.name: search_label_name,
+                product_name: [like, search_product_name]
+            }
+        </oper>
+    </entity>
+    <entity name="cers" time="true" label="证书管理">
+        <attr name="purchased_id" type="json" label="订单项id集合"/>
+        <attr name="cer_year" type="int" label="认证年度"/>
+        <attr name="pay_date" type="datetime" label="购买时间"/>
+        <attr name="end_date" type="datetime" label="订单项最晚时间"/>
+        <attr name="owner_id" type="key" label="用户id"/>
+        <oper role="client" name="create" page="个人中心页面课程组件,个人中心页面项目组件" type="insert" label="增加证书">
+            data: {
+                purchased_id: purchased_id,
+                cer_year: cer_year,
+                pay_date: pay_date,
+                end_date: end_date,
+                owner_id: token.id
+            }
+        </oper>
+        <oper role="shop" name="shop_create" page="cz管理页面," type="insert" label="店铺增加证书">
+            data: {
+                purchased_id: purchased_id,
+                cer_year: cer_year,
+                pay_date: pay_date,
+                end_date: end_date,
+                owner_id: owner_id
+            }
+        </oper>
+        <oper role="client" name="search" page="个人中心页面课程组件,个人中心页面项目组件" type="search" label="查询证书">
+            data: {
+                purchased_id: purchased_id,
+                cer_year: cer_year,
+                pay_date: pay_date,
+                end_date: end_date
+            },
+            with: {
+                owner_id: token.id
+            }
+        </oper>
+        <oper role="shop" name="shop_search" page="学时证明管理" type="search" label="店铺查询证书">
+            data: {
+                purchased_id: purchased_id,
+                cer_year: cer_year,
+                pay_date: pay_date
+            },
+            with: {
+                owner_id: owner_id
+            }
+        </oper>
+    </entity>
+    <entity name="sections" label="店铺板块">
+        <attr name="shop_id" type="key" table="shops" default="0" label="店铺ID"/>
+		<attr name="page" type="int" label="页面"/>
+        <attr name="desc" type="name" label="板块描述"/>
+		<attr name="template" type="int" label="模板"/>
+		<attr name="name" type="name" label="名称"/>
+		<attr name="sort" type="int" label="排序"/>
+        <oper name="search" page="首页项目选项和轮播模块,课程云首页,项目式店铺首页" type="search" label="板块列表">
+            data: {
+                id: id,
+                shop_id: shop_id,
+                page: page,
+                template: template,
+                name: name,
+                sort: sort,
+                items.section_products.section_id: {
+                    product_id: {
+                        id: product_id,
+                        name: product_name,
+                        desc: product_desc,
+                        period: product_period,
+                        teacher: product_teacher,
+                        image: product_image,
+                        price: product_price,
+                        onsale: product_onsale,
+                        is_auth: product_is_auth,
+                        attr: product_attr,
+                        cer_year: product_cer_year,
+                        cer_industry: product_cer_industry,
+                        is_project: product_is_project
+                    }
+                },
+                items.package_section.section_id: {
+                    package_id: {
+                        id: package_id,
+                        name: name,
+                        title1: title1,
+                        title2: title2,
+                        img: img,
+                        items.package_product.package_id: {
+                            product_id: {
+                                name: product_name,
+                                year: product_year,
+                                project_id: {
+                                    start_stydy_time: start_stydy_time,
+                                    end_study_time: end_study_time
+                                }
+                            }
+                        },
+                        items.package_attribute_value.package_id: {
+                            attribute_value_id: {
+                                attribute_value.id: {
+                                    name: name
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            with: {shop_id: shop_id},
+            order: {sort: asc}
+        </oper>
+        <oper name="search_package" type="search" label="板块列表">
+            data: {
+                id: id,
+                items.package_section.section_id: {
+                    package_id: {
+                        name: name,
+                        address: address,
+                        title1: title1,
+                        title2: title2,
+                        year: year
+                    }
+                }
+            },
+            with: {shop_id: shop_id},
+            order: {sort: asc}
+        </oper>
+		<oper role="shop" page="板块管理" name="create" type="insert" label="新增店铺板块">
+			data:{
+				shop_id: shop_id,
+				name: name,
+                desc: desc,
+				sort: sort,
+				template: template,
+				page: page
+			}
+		</oper>
+        <oper page="板块管理" role="shop" name="shop_search" type="search" label="查询板块">
+            data: {
+                id: id,
+                shop_id: shop_id,
+                page: page,
+                desc: desc,
+                template: template,
+                name: name,
+                sort: sort
+            },
+            with: {shop_id: token.shop_id, name: [like, name]},
+            order: {sort: asc}
+        </oper>
+        <oper page="板块管理" role="shop" name="shop_edit" type="update" label="修改店铺板块">
+			data:{
+				name: name,
+                desc: desc,
+                sort: sort,
+                template: template
+			},
+            with: {id: id}
+		</oper>
+         <oper  role="shop" name="shop_get" type="first" label="店铺板块详情">
+			data:{
+				name: name,
+				sort: sort,
+				template: template,
+				page: page
+			},
+            with: {id: id}
+		</oper>
+        <oper page="板块管理" role="shop" name="shop_delete" type="delete" label="删除店铺板块">
+			with:{id: id}
+		</oper>
+	</entity>
+    <entity name="section_products" label="店铺板块产品">
+        <attr name="section_id" type="key" table="sections" required="true" />
+        <attr name="product_id" type="key" table="products" required="true" />
+        <oper name="search" page="板块管理" type="all" label="板块产品">
+            data: {
+                section_id: section_id,
+                product_id: {
+                    id: id,
+                    name: name,
+                    desc: desc,
+                    period: period,
+                    teacher: teacher,
+                    image: image,
+                    price: price,
+                    onsale: onsale,
+                    is_auth: is_auth,
+                    attr: attr,
+                    cer_year: cer_year,
+                    cer_industry: cer_industry,
+                    is_project: is_project
+                }
+            },
+            with: {section_id: section_id}
+        </oper>
+		<oper name="create" page="板块管理" role="shop" type="aftertreatment" label="新增板块产品,判断是否重复，是否超过30条">
+			data: {util: SectionProductsUtil.create}
+		</oper>
+        <oper name="delete" page="板块管理" role="shop" type="delete" label="删除板块的产品">
+            with: {
+                product_id: product_id,
+                section_id: section_id
+                }
+        </oper>
+    </entity>
+	<entity name="instructor" label="辅导员管理">
+		<attr name="name" type="name" required="true" label="姓名"/>
+		<attr name="idcard" type="idcard" label="身份证号"/>
+        <attr name="company" type="name" label="单位名称"/>
+        <attr name="phone" type="phone" required="true" label="手机号码"/>
+        <attr name="email" type="email" label="邮箱地址"/>
+        <attr name="desc" type="name" laebl="描述"/>
+        <attr name="open_id" type="name" label="微信open_id"/>
+        <attr name="img" type="name" label="头像"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <attr name="enabled" type="bool" default="1" label="是否可用"/>
+        <attr name="password" type="password" required="true" label="登录密码"/>
+        <oper name="login" page="课程云后端登录页面" type="login" label="辅导员登录">
+            data: {id: id},
+            with: {phone: phone, password: password}
+        </oper>
+		<oper name="create" role="shop" page="辅导员页面" type="registerNotSms" label="新增辅导员">
+			data: {
+                phone: phone,
+				name: name,
+				idcard: idcard,
+				company: company, 
+				email: email,
+                desc: desc,
+                img: img,
+                enabled: enabled,
+				password: password,
+                shop_id: shop_id
+			}
+		</oper>
+		<oper role="client"  page="辅导员页面" name="edit" type="update" label="更新辅导员">
+			data: {
+				name: name,
+				idcard: idcard,
+				company: company, 
+				phone: phone,
+				email: email,
+                desc: desc,
+                img: img,
+                enabled: enabled,
+				password: password
+			},
+            with: {id: id}
+		</oper>
+		<oper role="client" page="辅导员页面" name="setpswd" type="setpwd" label="修改密码" >
+			data: {password: password},
+            with: {id: token.id, password: opassword}
+		</oper>
+		<oper role="shop" page="添加班级页面,班级管理,班级编辑,辅导员页面" name="search" type="search" label="辅导员列表">
+			data: {
+                id: id,
+				name: name,
+				idcard: idcard,
+				company: company, 
+				phone: phone,
+				email: email,
+                desc: desc,
+                img: img,
+                enabled: enabled,
+				password: password
+			},
+            with: {
+                name: [like, name],
+                phone: [like, phone],
+                shop_id: shop_id
+            }
+		</oper>
+        <oper role="client" page="项目式学习页面" name="get" type="first" label="获取辅导员">
+			data: {
+                id: id,
+				name: name,
+				idcard: idcard,
+				company: company, 
+				phone: phone,
+				email: email,
+                desc: desc,
+                img: img,
+                enabled: enabled,
+				password: password
+			},
+            with: {
+                id: id
+            }
+		</oper>
+        <oper role="client" page="辅导员页面" name="profile" type="first" label="辅导员获取自己信息">
+			data: {
+                id: id,
+				name: name,
+				idcard: idcard,
+				company: company, 
+				phone: phone,
+				email: email,
+                desc: desc,
+                img: img,
+                password: password
+			},
+            with: {
+                id: token.id
+            }
+		</oper>
+		<oper role="shop" page="辅导员页面" name="delete" type="delete" label="删除辅导员">
+			with:{id: id}
+		</oper>
+	</entity>
+	<entity name="class" time="true" label="班级管理" >
+		<attr name="name" type="name" required="false" label="班级名称"/>
+		<attr name="shop_id" table="shops" type="key" label="所属店铺id"/>
+		<attr name="product_id" table="products" type="key" label="所属产品id" />
+		<attr name="task_id" table="tasks" type="key" label="任务id" />
+		<attr name="activitie_id" table="activities" type="key" label="活动id" />
+		<attr name="state" type="int" default="0" label="状态,0是未开班，1是开班，2是失效"/>
+        <attr name="start_time" type="name" label="开班时间"/>
+        <attr name="instructor_id" type="key" table="instructor" label="辅导员id"/>
+		<attr name="evaluates" table="evaluates" type="json" label="评价id" />
+        <oper  name="search_count" type="search_group" label="查询每个班级的人数">
+            data: {
+                id: id,
+                class_users.class_id: {
+                    user_id: user_id
+                }
+            },
+            group: {id: id}
+        </oper>
+		<oper role="shop" page="添加班级页面,班级管理" name="create" type="insert" label="新增班级">
+			data:{
+				name: name,
+				shop_id: token.shop_id,
+				product_id: product_id,
+				task_id: task_id,
+				activitie_id: activitie_id,
+                start_time: start_time,
+                instructor_id: instructor_id,
+				state: state
+			}
+		</oper>
+		<oper role="shop" page="班级管理,班级编辑" name="edit" type="update" label="更新班级">
+			data:{
+				name: name,
+				shop_id: token.shop_id,
+				product_id: product_id,
+				task_id: task_id,
+                start_time: start_time,
+				activitie_id: activitie_id,
+                instructor_id: instructor_id,
+				state: state
+			},
+			with:{id: id}
+		</oper>
+		<oper role="shop" name="search_shop" type="search" label="查询所属店铺的班级列表">
+			data:{
+				id: id,
+				name: name,
+				shop_id: {
+                    name: shop_name
+                },
+				product_id: {
+                    id: product_id,
+                    name: product_name
+                },
+                instructor_id: {
+                    id: instructor_id,
+                    name: instructor_name
+                },
+                start_time: start_time,
+				task_id: {
+                    name: task_name,
+                    desc: task_desc
+                },
+				activitie_id: activitie_id,
+				state: state
+			},
+			with:{
+				shop_id: token.shop_id,
+                name: [like, name],
+                state: state
+			},
+            order: {id: desc}
+		</oper>
+		<oper role="shop" page="班级管理,班级列表" name="search" type="search" label="班级列表">
+			data:{
+				id: id,
+				name: name,
+				shop_id: {
+                    name: shop_name
+                },
+				product_id: {
+                    id: product_id,
+                    name: product_name
+                },
+                instructor_id: {
+                    id: instructor_id,
+                    name: instructor_name
+                },
+                start_time: start_time,
+				task_id: {
+                    name: task_name,
+                    desc: task_desc
+                },
+				activitie_id: activitie_id,
+				state: state
+			},
+			with:{
+				shop_id: token.shop_id,
+				name: [like, name]
+			},
+            order: {id: desc}
+		</oper>
+        <oper role="client" page="辅导员班级列表,班级评价组件" name="instructor_search" type="search" label="班级列表辅导员专用">
+			data:{
+				id: id,
+				name: name,
+				shop_id: {
+                    name: shop_name
+                },
+				product_id: {
+                    id: product_id,
+                    period: product_period,
+                    project_id: {
+                        id: project_id,
+                        name: project_name,
+                        start_time: project_start_time,
+                        end_study_time: project_end_study_time,
+                        start_stydy_time: project_start_stydy_time,
+                        organizer: project_organizer,
+                        end_time: project_end_time,
+                        onsale: project_onsale,
+                        sponsor: project_sponsor
+                    }
+                },
+                instructor_id: {
+                    id: instructor_id,
+                    name: instructor_name
+                },
+				task_id: {
+                    name: task_name,
+                    desc: task_desc
+                },
+				activitie_id: activitie_id,
+				state: state
+			},
+			with:{
+				instructor_id: token.id,
+                name: [like, name]
+			},
+            order: {id: desc}
+		</oper>
+		<oper role="client" page="辅导员班级列表" name="get" type="first" label="获取班级信息">
+			data:{
+				id: id,
+				name: name,
+				shop_id: {
+                    name: shop_name
+                },
+				product_id: {
+                    id: product_id,
+                    name: product_name
+                },
+                instructor_id: {
+                    id: instructor_id,
+                    name: instructor_name
+                },
+                start_time: start_time,
+				task_id: {
+                    name: task_name,
+                    desc: task_desc
+                },
+				activitie_id: activitie_id,
+				state: state
+               
+			},
+			with:{ id: id }
+		</oper>
+        <oper role="shop" page="班级管理" name="delete" type="delete" label="删除班级">
+            with: {id: id}
+        </oper>
+        <oper role="client" name="get_rate_by_user_id_and_class_id" type="search" label="根据用户id和班级id获取rate">
+            data: {
+                class_users.class_id: {
+                    user_id: {
+                        orders.owner_id: {
+                            purchased.order_id: {
+                                rate: rate
+                            }
+                        }
+                    }
+                }
+            },
+            with: {orders.owner_id: user_id, id: id}
+        </oper>
+        <oper role="shop" page="班级管理" name="autoCreate" type="aftertreatment">
+            data: {util: ClassUtil.autoCreate}
+        </oper>
+	</entity>
+	<entity name="evaluates" time="true" label="班级评价">
+		<attr name="user_id" type="key" table="users" required="true" label="用户id"/>
+		<attr name="grade" type="int" required="true" label="评分"/>
+		<attr name="class_id" type="key" table="class" required="true" label="所属班级id"/>
+		<attr name="content" type="text" required="true" label="评价内容" />
+		<oper role="client" page="班级评价组件" name="create" type="insert" label="新增评价">
+			data:{
+				user_id: user_id,
+				grade: grade,
+				class_id: class_id,
+				content: content
+			}
+		</oper>
+        <oper role="client" page="班级评价组件" name="edit" type="update" label="修改评价">
+			data:{
+				grade: grade,
+				content: content
+			},
+            with: {user_id: user_id,class_id: class_id}
+		</oper>
+		<oper role="admin" name="delete" type="delete" label="删除评价">
+			with:{
+				id: id
+			}
+		</oper>
+		<oper name="search" type="search" label="查询班级评价">
+			data:{
+				user_id: {
+					id: id,
+					name: name,
+					company: company, 
+					phone: phone, 
+					email: email, 
+					balance: balance
+				},
+				grade: grade,
+				class_id:{
+					name: class_name
+				},
+				content: content
+			},
+			with:{
+				class_id: class_id
+			}
+		</oper>
+	</entity>
+	<entity name="class_users" label="班级用户关联表">
+		<attr name="class_id" type="key" table="class" required="true" label="班级id"/>
+		<attr name="user_id" type="key" table="users" required="true" label="用户id"/>
+		<attr name="purchased_id" type="key" table="purchased" required="true" label="订单项id"/>
+		<oper role="shop" name="create" page="班级管理->配置弹出页面(banjiall.vue[添加])" type="insert" label="班级新增学生">
+			data: {
+				class_id: class_id,
+				user_id: user_id,
+                purchased_id: purchased_id
+			}
+		</oper>
+        <oper role="shop" name="delete" page="班级管理->配置弹出页面(banjiall.vue[删除])" type="delete" label="班级删除学生">
+			with: {
+				class_id: class_id,
+				user_id: user_id
+			}
+		</oper>
+		<oper role="client" name="search" page="班级管理->配置弹出页面(banjiall.vue[查询])，辅导员查看学生详情页,ProgressControl组件(找不到引用该组件的页面)" type="search" label="查询班级有所有学生">
+			 data: {
+                class_id: {
+                    id: class_id,
+                    name: class_name
+                },
+                user_id: {
+					id: id,
+					name: name,
+					company: company, 
+					phone: phone, 
+					email: email, 
+					balance: balance,
+                    evaluates.user_id: {
+                        content: evaluates_content,
+                        grade: evaluates_grade
+                    }
+                },
+                purchased_id: {
+                    id: purchased_id,
+                    rate: rate,
+                    score: score,
+                    progress: progress,
+                    product_id: product_id
+                }
+            },
+                with: {
+                        class_id: class_id,
+                        users.name: [like,user_name],
+                        user_id: user_id,
+                        users.phone: [like,user_phone]
+                    }
+		</oper>
+        <oper role="client" name="get_class_by_purchased_id" page="项目式学习页面,答疑专区问题详情" type="first" label="根据订单项ID获取班级信息">
+            data: {
+                class_id: {
+                    id:id,
+                    name: name,
+                    shop_id: shop_id,
+                    product_id: product_id,
+                    task_id: task_id,
+                    activitie_id: activitie_id,
+                    start_time: start_time,
+                    instructor_id: instructor_id,
+                    state: state
+                }
+            },
+            with: {
+                purchased_id: purchased_id
+            }
+        </oper>
+        <oper role="shop" name="create_all" page="班级管理->配置弹出页面(banjiall.vue[添加全部])" type="insert_all_class_user" label="把所有未加入班级的用户加入班级"></oper>
+	</entity>
+    <entity name="class_bulletin" time="true" label="班级公告关联表">
+		<attr name="class_id" type="key" table="class" required="true" label="班级id"/>
+        <attr name="bulletin" type="message" label="公告"/>
+        <oper role="client" name="create" page='InstructorClass,ProgressControl(这两个组价都没有被页面引用到)' type="insert" label="新增班级公告">
+            data: {
+                class_id: class_id,
+                bulletin: bulletin
+            }
+        </oper>
+        <oper role="client" name="delete" page="无" type="delete" label="删除班级公告">
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="client" name="edit" page="无" type="update" label="更新班级公告">
+            data: {
+                class_id: class_id,
+                bulletin: bulletin
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper name="search" page="项目式学习页面" type="search" label="查询班级公告">
+            data: {
+                id: id,
+                bulletin: bulletin,
+                created_at: created_at
+            },
+            with: {
+                class_id: class_id
+            },
+            order: {id: desc}
+        </oper>
+    </entity>
+    <entity name="class_file" time="true" label="班级文件">
+        <attr name="id" type="key" label="主键"/>
+        <attr name="class_id" type="key" label="班级id"/>
+        <attr name="file_name" type="name" label="用户原文件名"/>
+        <attr name="file_as_name" type="name" label="存储于服务器的文件名"/>
+        <oper role="client" name="create" page='InstructorClass,ProgressControl(这两个组价都没有被页面引用到)' type="insert" label="创建班级文件">
+            data: {
+                class_id: class_id,
+                file_name: file_name,
+                file_as_name: file_as_name
+            }
+        </oper>
+        <oper name="search" page="项目式学习页面" type="search" label="查询班级文件">
+            data: {
+                id: id,
+                class_id: class_id,
+                file_name: file_name,
+                file_as_name: file_as_name
+            },
+            with: {
+                class_id: class_id
+            },
+            order: {id: desc}
+        </oper>
+        <oper role="client" name="delete" page="无" type="delete" label="删除班级文件">
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="class_bulletin_class_file" label="班级文件公告关联表">
+        <attr name="class_bulletin_id" type="key" table="class_bulletin" label="公告"/>
+        <attr name="class_file_id" type="key" table="class_file" label="文件"/>
+    </entity>
+    <entity name="file" label="上传文件">
+        <attr name="id" type="key" label="主键"/>
+        <oper role="shop" page="项目包管理2, 轮播图" name="upload_banner" type="upload_file" label="上传轮播图文件">
+            data: { path: banner }
+        </oper>
+        <oper role="shop" page="wangeditor组件, 图片资源, 项目式产品管理,产品管理, 项目包管理2 " name="upload_img" type="upload_file" label="上传图片文件">
+            data: { path: img }
+        </oper>
+        <oper role="shop" page="无" name="upload_excel" type="upload_file" label="上传表格文件">
+            data: { path: excel }
+        </oper>
+        <oper role="shop" page="音频资源" name="upload_music" type="upload_file" label="上传音乐文件">
+            data: { path: music }
+        </oper>
+        <oper role="shop" page="文档资源" name="upload_work" type="upload_file" label="上传文档文件">
+            data: { path: work }
+        </oper>
+        <oper role="shop" page='InstructorClass,ProgressControl(这两个组价都没有被页面引用到)' name="upload_class" type="upload_file" label="上传班级文件">
+            data: { path: class }
+        </oper>
+        <oper role="shop" page="暂时性的上传页面, 学生管理, 学生批量注册" name="import_users" type="aftertreatment" label="批量注册用户">
+            data: { util: FileUtil.import_user}
+        </oper>
+        <oper role="shop" page="暂时性的上传页面, 项目式产品管理, 产品管理" name="import_products" type="aftertreatment" label="批量导入课程">
+            data: { util: FileUtil.import_products}
+        </oper>
+    </entity>
+    <entity name="md5" label="保利微视加密">
+        <attr name="id" type="key" label="主键"/>
+        <oper page="视频资源" name="get" type="aftertreatment" label="保利微视加密">
+            data: { util:PolyvUtil.get_md5}
+        </oper>
+    </entity>
+    <entity name="polyv" label="保利微视回调">
+        <attr name="id" type="key" label="主键"/>
+        <oper page="无" name="upload_call_back" type="aftertreatment" label="保利微视加密">
+            data: { util:PolyvUtil.polyv_call_back}
+        </oper>
+    </entity>
+    <entity name="selected" time="true" label="批量选课">
+        <attr name="selected" type="int" label="是否选中"/>
+        <attr name="user_id" type="key" table="users" label="用户id"/>
+        <attr name="product_id" type="key" table="products" label="产品id"/>
+        <attr name="selected_batch_id" type="key" table="selected_batch" label="批次id"/>
+         <oper role="shop" page="学生批量开课, 学生批量设置年度" name="search_group_by_user" type="search" label="查询某批次的用户">
+            data: {
+                id: id,
+                selected: selected,
+                user_id: {
+                    id: user_id,
+                    name: user_name,
+                    idcard: user_idcard,
+                    phone: user_phone,
+                    company: user_company
+                }
+            },
+            with: {selected_batch_id: selected_batch_id},
+            groupBy: {user_id: user_id},
+            order: {id: asc}
+        </oper>
+        <oper role="shop" page="学生批量开课, 学生批量设置年度" name="search_group_by_product" type="search" label="查询某批次的产品">
+            data: {
+                id: id,
+                selected: selected,
+                product_id: {
+                    id: product_id,
+                    name: product_name,
+                    period: product_period,
+                    attr: product_attr,
+                    price: product_price,
+                    cer_year: product_cer_year,
+                    purchased.product_id: {
+                        is_first: is_first,
+                        order_id: {
+                            owner_id: user_id
+                        }
+                    }
+                }
+            },
+            with: {selected_batch_id: selected_batch_id},
+            withIn: {orders.owner_id: user_id_arr},
+            groupBy: {product_id: product_id}
+        </oper>
+        <oper role="shop" page="学生管理, 学生批量开课, 学生批量设置年度" name="search" type="search" label="查询">
+            data: {
+                id: id,
+                selected: selected,
+                user_id: user_id,
+                product_id: {
+                    id: product_id,
+                    name: product_name,
+                    period: product_period,
+                    price: product_price,
+                    attr: product_attr,
+                    cer_year: product_cer_year
+                }
+            },
+            with: {user_id: user_id, id: id}
+        </oper>
+        <oper role="shop" page="无" name="update" type="update" label="修改选中状态">
+            data: {
+                selected: selected
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" page="学生管理" name="delete" type="delete" label="删除">
+            with: {id: id}
+        </oper>
+        <oper role="shop" page="学生管理" name="create" type="insert_many_to_many" label="批量选课,用户id,产品id">
+            data: {
+                user_id: user_id_arr,
+                product_id: product_id_arr
+            }
+        </oper>
+        <oper role="shop" page="学生批量选课" name="create_by_idcard" type="aftertreatment" label="批量选课,身份证id,产品id">
+            data: {util: SelectedUtil.create_by_idcard}
+        </oper>
+    </entity>
+    <entity name="search_history" time="true" label="用户搜索历史">
+        <attr name="user_id" type="key" label="用户id"/>
+        <attr name="search_content" type="name" label="搜索内容"/>
+        <oper role="client" page="无" name="search" type="search" label="查询用户搜索历史">
+            data: {id: id, user_id: user_id, search_content: search_content},
+            with: {user_id: token.id}
+        </oper>
+        <oper role="client" page="无" name="create" type="insert" label="增加用户搜索历史">
+            data: {user_id: token.id, search_content: search_content}
+        </oper>
+        <oper role="client" page="无" name="delete_all" type="delete" label="清空搜索历史">
+            with: {user_id: token.id}
+        </oper>
+        <oper role="client" page="无" name="delete" type="delete" label="删除指定用户搜索历史">
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="selected_batch" time="true" label="选课批次">
+        <attr name="batch_num" type="name" label="批号"/>
+        <attr name="remarks" type="name" label="备注"/>
+        <attr name="state" type="int" default="1" label="状态:0代表无效，1代表有效，2代表已经开课"/>
+        <attr name="created_at" label="创建时间"/>
+        <attr name="shop_id" label="店铺id"/>
+        <oper role="shop" page="学生批量开课, 学生批量设置年度" name="search" type="search" label="查询批次">
+            data: {
+                batch_num: batch_num,
+                remarks: remarks,
+                state: state,
+                id: id,
+                created_at: created_at
+            },
+            with: {remarks: [like,remarks], state: state, created_at: [like,created_at], shop_id: shop_id},
+            order: {created_at: desc}
+        </oper>
+        <oper role="shop" page="学生批量开课" name="edit" type="update" label="更新批次">
+            data: {
+                remarks: remarks,
+                state: state
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" page="无" name="create" type="insert" label="新增批次">
+            data: {
+                batch_num: batch_num,
+                remarks: remarks,
+                state: state
+            }
+        </oper>
+    </entity>
+    <entity name="discuss_theme" time="true" label="讨论主题">
+        <attr name="title" type="name" label="标题"/>
+        <attr name="content" type="name" label="内容"/>
+        <attr name="sort" type="int" label="排序"/>
+        <attr name="resource_id" type="key" table="resources" label="资源id"/>
+        <oper role="shop" name="delete" page="主题讨论区" type="delete" label="删除主题资源">
+            with: {resource_id : resource_id}
+        </oper>
+        <oper role="shop" name="create" page="主题讨论区" type="insert" label="增加主题资源">
+            data: {
+                content: content,
+                sort: sort,
+                title: title,
+                owner_id: token.id
+            }
+        </oper>
+        <oper role="shop" name="search" page="主题讨论区" type="search" label="查询主题资源">
+            data: {
+                id: id,
+                content: content,
+                sort: sort,
+                title: title,
+                resource_id :resource_id
+            },
+            with:{title: [like,title] }
+        </oper>
+        <oper role="shop" name="get" page="主题讨论区， 辅导员查看学生详情页，整体学习页面 " type="first" label="获取单个主题资源">
+            data: {
+                content: content,
+                sort: sort,
+                title: title
+            },
+            with:{id: id }
+        </oper>
+        <oper role="client" name="get_with_comment" page="主题讨论区, 辅导员查看学生详情页,整体学习页面" type="first" label="获取单个主题资源">
+            data: {
+                id:id,
+                content: content,
+                sort: sort,
+                title: title
+            },
+            with:{id: id,resource_id: resource_id }
+        </oper>
+        <oper role="shop" name="edit" page="主题讨论区" type="update" label="修改单个主题资源">
+            data: {
+                content: content,
+                sort: sort,
+                title: title
+            },
+            with:{id: id }
+        </oper>
+    </entity>
+    <entity name="comment" time="true" label="讨论主题回复">
+        <attr name="discuss_theme_id" type="key" table="discuss_theme" label="主题表id"/>
+        <attr name="user_id" type="key" table="users" label="用户id"/>
+        <attr name="content" type="text" label="评论内容"/>
+        <attr name="class_id" type="key" table="class" label="班级id"/>
+        <attr name="product_id" type="key" table="products" label="产品id"/>
+        <oper role="client" name="create" page="答疑专区问题详情, 整体学习页面" type="insert" label="评论主题">
+            data: {
+                user_id: token.id,
+                discuss_theme_id: discuss_theme_id,
+                content: content,
+                product_id: product_id
+            }
+        </oper>
+        <oper role="client" name="get_comment_by_theme" page="辅导员查看学生详情页, 整体学习页面" type="search" label="获取主题的评论">
+            data: {
+                user_id: {
+                    name: user_name
+                    },
+                content: content,
+                created_at: created_at
+            },
+            with:{discuss_theme_id: discuss_theme_id, class_id: class_id, user_id: user_id, product_id: product_id}
+        </oper>
+    </entity>
+    <!-- 1234567890123 -->
+    <entity name="banner" time="true" label="轮播图">
+        <attr name="name" type="name" label="名称"/>
+        <attr name="url" type="text" label="跳转地址"/>
+        <attr name="file_name" type="name" label="图片名"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <attr name="sort" type="key" label="排序"/>
+        <attr name="color" type="name" label="颜色"/>
+        <oper page="首页" name="search" type="search" label="查询轮播图">
+            data:{
+                name: name,
+                file_name: file_name,
+                shop_id: shop_id,
+                sort: sort,
+                url: url,
+                id: id,
+                color: color
+            },
+            with: {shop_id: shop_id},
+            order: {sort: asc}
+        </oper>
+        <oper page="轮播图" name="shop_search" type="search" label="查询轮播图">
+            data:{
+                name: name,
+                file_name: file_name,
+                shop_id: shop_id,
+                sort: sort,
+                url: url,
+                id: id,
+                color: color
+            },
+            with: {shop_id: token.shop_id}
+        </oper>
+        <oper role="shop" page="轮播图" name="search_not_id" type="search" label="查询不报所传id的轮播图">
+            data: {
+                id: id,
+                sort: sort
+            },
+            with: {shop_id: shop_id},
+            withNotIn: {id: id_arr}
+        </oper>
+        <oper role="shop" page="轮播图" name="create" type="insert" label="增加轮播图">
+            data: {
+                name: name,
+                file_name: file_name,
+                shop_id: shop_id,
+                sort: sort,
+                url: url,
+                color: color
+            }
+        </oper>
+        <oper role="shop" page="轮播图, 项目包管理2" name="update" type="update" label="修改轮播图">
+            data: {
+                name: name,
+                file_name: file_name,
+                shop_id: shop_id,
+                sort: sort,
+                url: url,
+                color: color
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="delete" type="delete" label="删除轮播图">
+            with: {id: id}
+        </oper>
+    </entity>
+    <!-- 1234567890123 -->
+    <entity name="product_news" time="true" label="项目店铺新闻">
+        <attr name="title" type="name" label="新闻标题"/>
+        <attr name="url" type="text" label="新闻跳转地址"/>
+        <attr name="content" type="text" label="新闻内容（html）"/>
+        <attr name="package_id" type="key" table="package" label="项目包"/>
+        <oper role="shop" page="项目式的项目首页,项目通知,项目包管理2" name="search" type="search" label="获取项目包下的新闻">
+            data: {
+                id: id,
+                title: title,
+                url: url,
+                content: content
+            },
+            with: {package_id: package_id}
+        </oper>
+        <oper role="shop" page="项目包管理2" name="insert" type="insert" label="在项目包下增加一则新闻">
+            data: {
+                package_id: package_id,
+                title: title,
+                content: content,
+                url: url
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="delete" type="delete" label="在项目包下删除一则新闻">
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2"  name="update" type="update" label="更新一则新闻">
+            data: {
+                title: title,
+                content: content,
+                url: url
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="news" type="first" label="获取一则新闻">
+            data: {
+                title: title,
+                content: content,
+                url: url
+            },
+            with: {
+                id: id
+            }
+        </oper>
+    </entity>
+    <entity name="product_notices" time="true" label="项目店铺公告">
+        <attr name="title" type="name" label="公告标题"/>
+        <attr name="url" type="text" label="公告跳转地址"/>
+        <attr name="content" type="text" label="公告内容（html）"/>
+        <attr name="package_id" type="key" table="package" label="项目包"/>
+        <oper role="shop" page="项目式的项目首页,项目通知,项目包管理2" name="search" type="search" label="获取项目包下的公告">
+            data: {
+                id: id,
+                title: title,
+                url: url,
+                content: content
+            },
+            with: {package_id: package_id}
+        </oper>
+        <oper role="shop" page="项目包管理2" name="insert" type="insert" label="在项目包下增加一条公告">
+            data: {
+                package_id: package_id,
+                title: title,
+                content: content,
+                url: url
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="delete" type="delete" label="在项目包下删除一条公告">
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" role="shop" page="项目包管理2" name="update" type="update" label="更新一条公告">
+            data: {
+                title: title,
+                content: content,
+                url: url
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="notice" type="first" label="获取一条公告">
+            data: {
+                title: title,
+                content: content,
+                url: url
+            },
+            with: {
+                id: id
+            }
+        </oper>
+    </entity>
+    <entity name="product_header" time="true" label="项目店铺头部信息">
+        <attr name="img_file_name" type="name" label="图片名字"/>
+        <attr name="url" type="text" label="图片跳转地址"/>
+        <attr name="content" type="name" label="图片文字内容（html）"/>
+        <attr name="package_id" type="key" table="package" label="项目包"/>
+    </entity>
+    <entity name="product_small_banner" time="true" label="项目店铺小轮播图信息">
+        <attr name="img_file_name" type="name" label="图片名字"/>
+        <attr name="url" type="text" label="图片跳转地址"/>
+        <attr name="package_id" type="key" table="package" label="项目包"/>
+        <oper page="项目式的项目首页,项目包管理2" name="search" type="search" label="获取项目包下面的小轮播图">
+            data: {
+                id: id,
+                img_file_name: img_file_name,
+                url: url
+            },
+            with: {package_id: package_id}
+        </oper>
+        <oper page="项目包管理2" name="insert" type="insert" label="向项目包中插入一张小轮播图">
+            data: {
+                package_id: package_id,
+                img_file_name: img_file_name,
+                url: url
+            }
+        </oper>
+        <oper page="项目包管理2" name="delete" type="delete" label="删除项目包中的一张小轮播图">
+            with: {
+                id: id
+            }
+        </oper>
+        <oper page="项目包管理2" name="banner" type="first" label="根据id查询轮播图">
+            data: {
+                id: id,
+                img_file_name: img_file_name,
+                url: url,
+                package_id: package_id
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper page="项目包管理2" name="update" type="update" label="更新轮播图信息">
+            data: {
+                img_file_name: img_file_name,
+                url: url
+            },
+            with: {
+                id: id
+            }
+        </oper>
+    </entity>
+    <entity name="product_start_notice" time="true" label="项目店铺开班通知">
+        <attr name="title" type="name" label="开班通知标题"/>
+        <attr name="url" type="text" label="开班通知跳转地址"/>
+        <attr name="content" type="name" label="开班通知内容（html）"/>
+    </entity>
+    <entity name="product_operation_guide" time="true" label="项目店铺操作指南">
+        <attr name="title" type="name" label="操作指南标题"/>
+        <attr name="url" type="text" label="操作指南跳转地址"/>
+        <attr name="content" type="name" label="操作指南内容（html）"/>
+    </entity>
+    <entity name="icon" label="图标">
+        <attr name="name" type="name" label="图标名"/>  
+        <attr name="file_name" type="name" label="图标文件名"/>
+        <attr name="icon_type_id" type="key" table="icon_type" lable="图标类型id"/>
+        <attr name="state" type="name" label="状态:0未开始，1正在进行，2是已经完成"/>
+        <attr name="type" type="name" label="类型"/>
+        <oper role="shop" page="项目式学习页面" name="search" type="search" label="获取对应图标">
+            data: {file_name: file_name, type: type},
+            with: {state: state}
+        </oper>
+    </entity>
+    <entity name="icon_type" label="图标类型">
+        <attr name="type" type="name" label="图标类型：课程，讨论区，心得体会"/>
+        <oper role="shop" page="活动" name="search" type="all" label="获取对应图标类型">
+            data: {id: id, type: type}
+        </oper>
+    </entity>
+    <entity name="private" time="true" label="用户答题答案记录">
+        <attr name="content" type="text" label="答案json"/>
+        <attr name="purchased_id" table="purchased" type="key" label="订单项id"/>
+        <attr name="resource_id" table="resources" type="key" label="资源id"/>
+        <oper role="client" page="课后习题页面" name="create" type="insert" label="提交课后作业">
+            data: {
+                content: content,
+                resource_id: resource_id,
+                purchased_id: purchased_id
+            }
+        </oper>
+        <oper role="client" page="课后习题页面, 辅导员查看学生详情页" name="get" type="first" label="根据用户token,resources_id查询答案记录">
+            data: {
+                id: id,
+                content: content,
+                purchased_id: {
+                    order_id: {
+                        owner_id: owner_id
+                    }
+                }  
+            },
+            with: {orders.owner_id: token.id, resource_id: resource_id, purchased_id: purchased_id}
+        </oper>
+        <oper role="client" page="辅导员查看学生详情页" name="get_by_purchased_id" type="first" label="根据订单项id和资源id查找答案">
+            data: {
+                id: id,
+                content: content 
+            },
+            with: {purchased_id: purchased_id, resource_id: resource_id}
+        </oper>
+    </entity>
+    <entity name="answ_question" time="true" label="答疑">
+        <attr name="title" type="name" label="标题"/>
+        <attr name="content" type="text" label="内容"/>
+        <attr name="sort" type="int" label="排序"/>
+        <attr name="user_id" type="key" table="users" label="用户id"/>
+        <attr name="product_id" type="key" table="products" label="项目id"/>
+        <oper role="client" page="项目式学习页面->课程详情" name="create" type="insert" label="新增答疑">
+            data: {
+                title: title,
+                content: content,
+                user_id: token.id,
+                product_id: product_id
+            }
+        </oper>
+        <oper role="client" page="答疑专区问题详情,项目式学习页面" name="search" type="search" label="查询答疑">
+            data: {
+                id: id,
+                title: title,
+                content: content,
+                user_id: {
+                    name: user_name
+                },
+                created_at: created_at,
+                items.answ_question_comment.answ_question_id:{id: answ_id}
+            },
+            with: {product_id: product_id},
+            order: {created_at: desc}
+        </oper>
+        <oper name="search_by_instructor" page="无" type="search" label="根据辅导员id查询">
+            data: {
+                id: id,
+                title: title,
+                content: content,
+                product_id: {
+                    class.product_id: {
+                        name: class_name
+                    }
+                }
+            },
+            with: {class.instructor_id: instructor_id, class.id: class_id}
+        </oper>
+    </entity>
+    <entity name="answ_question_comment" time="true" label="答疑回复">
+        <attr name="answ_question_id" type="key" table="answ_question" label="答疑表id"/>
+        <attr name="user_id" type="key" table="users" label="用户id"/>
+        <attr name="class_id" type="key" table="class" label="班级id"/>
+        <attr name="content" type="text" label="回复内容"/>
+        <oper role="client" page="答疑专区问题详情" name="search" type="search" label="查询回复">
+            data: {
+                id: id,
+                user_id: {
+                    name: name
+                },
+                content: content,
+                created_at: created_at
+            },
+            with: {answ_question_id: answ_question_id, user_id: user_id, class_id: class_id},
+            order: {created_at: desc}
+        </oper>
+        <oper role="client" page="答疑专区问题详情" name="create" type="insert" label="增加回复">
+            data: {
+                answ_question_id: answ_question_id,
+                user_id: token.id,
+                content: content,
+                class_id: class_id
+            }
+        </oper>
+    </entity>
+    <entity name="package" time="true" label="项目包">
+        <attr name="name" type="name" label="名称"/>
+        <attr name="shop_id" type="key" table="shop_id" label="店铺id"/>
+        <attr name="title2" type="name" label="标题1"/>
+        <attr name="img" type="name" label="图片"/>
+        <attr name="background" type="name" label="背景图"/>
+        <attr name="title1" type="name" label="标题2"/>
+        <oper name="search" page="首页, 项目式的课程搜索, 项目包管理2" type="search" label="获取项目下面的子项目">
+            data: {
+                id: id,
+                name: name,
+                title1: title1,
+                title2: title2,
+                img: img,
+                background: background,
+                package_product.package_id: {
+                    product_id: {
+                        project_id: {
+                            start_stydy_time: start_stydy_time,
+                            end_study_time: end_study_time
+                        }
+                    }
+                }
+            },
+            with: {id: id, name: [like,name]},
+            groupBy: {id: id}
+        </oper>
+        <oper name="search_package" page="项目式的店铺主页" type="aftertreatment" label="根据条件获取项目包及其相关属性">
+            data: {util: PackageService.search_package}
+        </oper>
+        <oper role="shop" page="项目包管理2,板块管理" name="shop_search" type="search" label="店铺搜索项目包">
+            data: {
+                id: id,
+                name: name,
+                title1: title1,
+                title2: title2,
+                background: background,
+                img: img
+            },
+            with: {
+                name: [like,name],
+                shop_id: shop_id
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="shop_edit" type="update" label="店铺修改项目包">
+            data: {
+                name: name,
+                title1: title1,
+                title2: title2,
+                background: background,
+                img: img
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="shop_create" type="insert" label="店铺增加项目包">
+            data: {
+                name: name,
+                title1: title1,
+                title2: title2,
+                background: background,
+                img: img,
+                shop_id: shop_id
+            }
+        </oper>
+        <oper role="shop" page="项目包管理2" name="shop_delete" type="delete" label="店铺删除项目包">
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="package_product" label="项目包-项目关联">
+        <attr name="package_id" type="key" table="package" label="项目包id"/>
+        <attr name="product_id" type="key" table="products" label="项目包里面的产品id"/>
+        <oper name="search" page="项目包管理2" type="search" label="查询项目包下面的产品">
+            data: {
+                product_id: {
+                    id: product_id,
+                    is_project: is_project,
+                    name: product_name,
+                    year: product_year,
+                    project_id: {
+                        start_stydy_time: start_stydy_time,
+                        end_study_time: end_study_time
+                    },
+                    items.product_labels.product_id: {
+                        label_id: {
+                            id: label_id,
+                            name: label_name,
+                            parent_id: {
+                                name: parent_label_name
+                            }
+                        }
+                    }
+                }
+            },
+            with: {package_id: package_id}
+        </oper>
+        <oper role="shop" page="项目包管理2" name="shop_search" type="search" label="查询项目包包含的产品">
+            data: {
+                product_id: {
+                    id: product_id,
+                    name: product_name
+                }
+            },
+            with: {package_id: package_id}
+        </oper>
+        <oper role="shop" page="项目包管理2" name="shop_delete" type="delete" label="删除项目包包含的产品">
+            with: {product_id: product_id, package_id: package_id}
+        </oper>
+        <oper role="shop" page="项目包管理2" name="shop_create" type="insert" label="增加项目包包含的产品">
+            data: {
+                product_id: product_id,
+                package_id: package_id
+            }
+        </oper>
+    </entity>
+    <entity name="proportion" label="分数比例">
+        <attr name="resources" type="text" label="比例json"/>
+        <attr name="product_id" type="key" table="products" label="产品id"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <oper name="create" page="项目分数百分百设置" type="insert" label="增加分数比例">
+            data: {resources: resources, product_id: product_id, shop_id: shop_id}
+        </oper>
+        <oper name="get" page="项目分数百分百设置, 辅导员查看学生详情页, 整体学习页面" type="first" label="查找分数比例">
+            data: {resources: resources},
+            with: {product_id: product_id,shop_id: shop_id}
+        </oper>
+        <oper name="edit" page="项目分数百分百设置" type="update" label="更新分数比例">
+            data: {resources: resources},
+            with: {product_id: product_id,shop_id: shop_id}
+        </oper>
+    </entity>
+    <entity name="package_section" label="项目包-板块">
+        <attr name="package_id" type="key" table="package"/>
+        <attr name="section_id" type="key" table="sections"/>
+        <oper role="shop" page="板块管理" name="shop_create" type="insert" label="增加项目包">
+            data: {
+                package_id: package_id,
+                section_id: section_id
+            }
+        </oper>
+        <oper role="shop" page="板块管理" name="shop_delete" type="delete" label="删除项目包">
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop"  page="板块管理" name="shop_search" type="search" label="查询项目包">
+            data: {
+                id: id,
+                package_id: {
+                    name: package_name
+                }
+            },
+            with: {
+                section_id: section_id
+            }
+        </oper>
+    </entity>
+    <entity name="sms" label="登录时验证码">
+        <attr name="guid" type="name"/>
+        <attr name="code" type="name"/>
+        <attr name="create_time" type="name"/>
+    </entity>
+    <entity name="attribute_value" label="项目包的属性值表">
+        <attr name="name" type="name" label="属性值"/>
+        <attr name="shop_id" type="key" label="店铺id"/>
+        <attr name="sort" type="int" label="排序"/>
+        <oper role="shop" name="shop_create_value" type="union_insert" label="项目包属性增加属性值" page="店铺项目包属性管理">
+            data: {
+                attribute_value.attribute_value_id: {
+                    name: attribute_value_name,
+                    sort: attribute_value_sort,
+                    shop_id: shop_id
+                },
+                attribute_value_type.attribute_value_type_id: {
+                    attribute_id: attribute_id,
+                    attribute_value_id: [attribute_value_id]
+                }
+            }
+        </oper>
+        <oper role="shop" name="shop_edit" type="update" label="修改项目包属性的属性值" page="店铺项目包属性管理">
+            data: {
+                sort: sort,
+                name: name
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="shop_delete" type="delete" label="删除项目包属性的属性值" page="店铺项目包属性管理">
+            data: {
+                sort: sort,
+                name: name
+            },
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="attribute" lable="项目包的属性表">
+        <attr name="name" type="name" label="属性名字"/>
+        <attr name="shop_id" type="key" table="shops" label="店铺id"/>
+        <oper name="search" page="项目包管理, 项目式的店铺主页, 首页" type="search" label="搜索出店铺的属性和对应的属性值">
+            data: {
+                id: id,
+                name: name,
+                items.attribute_value_type.attribute_id: { 
+                    attribute_value_id: {
+                        id: attribute_value_id,
+                        name: attribute_value_name,
+                        sort: attribute_value_sort
+                    }
+                }
+            },
+            with: {id: id, shop_id: shop_id, name: name}
+        </oper>
+        <oper role="shop"  page="项目包管理, 项目包管理2" name="shop_search" type="search" label="查看店铺项目包属性">
+            data: {
+                id: id,
+                name: name
+            },
+            with: {shop_id: shop_id}
+        </oper>
+        <oper role="shop" page="项目包管理" name="shop_edit" type="update" label="更改店铺项目包属性">
+            data: {
+                name: name
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" page="项目包管理" name="shop_delete" type="delete" label="删除项目包属性">
+            with: {id: id}
+        </oper>
+        <oper role="shop" page="项目包管理" name="shop_create" type="insert" label="增加项目包属性">
+            data: {
+                name: name,
+                shop_id: shop_id
+            }
+        </oper>
+        <oper role="shop" page="项目式的店铺主页" name="shop_get_value" type="search" label="获取项目包属性的属性值">
+            data: {
+                id: id,
+                 name: name,
+                items.attribute_value_type.attribute_id: {
+                    attribute_value_id: {
+                        id: attribute_value_id,
+                        name: attribute_value_name,
+                        sort: attribute_value_sort 
+                    }
+                }
+            },
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="package_attribute_value" label="项目包关联属性值表">
+        <attr name="package_id" type="key" table="package" label="项目包id"/>
+        <attr name="attribute_value_id" type="key" table="attribute_value" label="属性值id"/>
+        <oper name="search" role="shop" type="search" label="test">
+            data: {
+                package_id: package_id,
+                attribute_value_id: attribute_value_id
+            }
+        </oper>
+        <oper name="shop_search" role="shop" type="search" page="店铺的项目包管理" label="搜索出项目包的属性和对应属性值">
+            data: {
+                id: id,
+                attribute_value_id: {
+                    id: attribute_value_id,
+                    name: attribute_value_name,
+                    attribute_value_type.attribute_value_id: {
+                        attribute_id: {
+                            name: attribute_name
+                        }
+                    }
+                }
+            },
+            with: {package_id: package_id}
+        </oper>
+        <oper name="shop_delete" role="shop" type="delete" page="店铺的项目包管理" label="删除项目包和属性的关联关系">
+            with: {id: id}
+        </oper>
+        <oper name="shop_create"  page="项目包管理2" role="shop" type="insert" label="增加项目包和属性的关联关系">
+            data: {
+                package_id: package_id,
+                attribute_value_id: attribute_value_id
+            }
+        </oper>
+    </entity>
+    <entity name="attribute_value_type" label="项目包的属性和属性值关联表">
+        <attr name="attribute_id" type="key" table="attribute" label="属性表"/>
+        <attr name="attribute_value_id" type="key" table="attribute_value" label="属性值表"/>
+        <oper role="shop" name="shop_delete" type="delete" label="删除项目包关联属性" page="店铺项目包属性管理">
+            with: {attribute_value_id: id}
+        </oper>
+    </entity>
+    <entity name="navigation_bar" label="导航栏表">
+        <attr name="name" type="name" label="导航栏每个值得名字"/>
+        <attr name="url" type="url" label="导航栏的链接"/>
+        <attr name="shop_id" type="key" table="shops"/>
+        <attr name="sort" type="int" label="排序"/>
+        <oper name="search" page="头部导航组件" type="search" laebl="搜索店铺导航栏">
+            data: {
+                id: id,
+                name: name,
+                url: url
+            },
+            with: {shop_id: shop_id},
+            order: {sort: asc}
+        </oper>
+        <oper role="shop" name="shop_search" type="search" label="获取店铺对应导航栏" page="店铺导航栏管理">
+            data: {
+                id: id,
+                name: name,
+                url: url,
+                sort: sort
+            },
+            with: {shop_id: token.shop_id}
+        </oper>
+        <oper role="shop" name="shop_create" type="insert" label="增加导航" page="店铺导航管理">
+            data: {
+                name: name,
+                url: url,
+                sort: sort,
+                shop_id: token.shop_id
+            }
+        </oper>
+        <oper role="shop" name="shop_edit" type="update" label="修改导航" page="店铺导航管理">
+            data: {
+                name: name,
+                url: url,
+                sort: sort
+            },
+            with: {id: id}
+        </oper>
+        <oper role="shop" name="shop_delete" type="delete" label="删除导航" page="店铺导航管理">
+            with: {id: id}
+        </oper>
+    </entity>
+    <entity name="authority_management" label="权限管理">
+        <attr name="label_management" type="bool" label="标签管理"/>
+        <attr name="labels_to_choose" type="bool" label="标签选用"/>
+        <attr name="image_resources" type="bool" label="图片资源"/>
+        <attr name="video_resources" type="bool" label="视频资源"/>
+        <attr name="document_resources" type="bool" label="文档资源"/>
+        <attr name="audio_resources" type="bool" label="音频资源"/>
+        <attr name="test_resources" type="bool" label="试题资源"/>
+        <attr name="homework_problems" type="bool" label="课后习题(简答题)"/>
+        <attr name="discussion_topic_resources" type="bool" label="讨论主题资源"/>
+        <attr name="course_product_list" type="bool" label="课程产品列表"/>
+        <attr name="activity_management" type="bool" label="活动管理"/>
+        <attr name="itemized_product_list" type="bool" label="项目式产品列表"/>
+        <attr name="project_package_property_management" type="bool" label="项目包属性管理"/>
+        <attr name="project_package_management" type="bool" label="项目包管理"/>
+        <attr name="student_management" type="bool" label="学员管理"/>
+        <attr name="cz_management" type="bool" label="CZ管理"/>
+        <attr name="credit_hours_management" type="bool" label="学时证明管理"/>
+        <attr name="bulk_registration" type="bool" label="批量注册"/>
+        <attr name="batch_elective" type="bool" label="批量选课"/>
+        <attr name="batch_classes" type="bool" label="批量开课"/>
+        <attr name="batch_revision_year" type="bool" label="批量修改年度"/>
+        <attr name="order" type="bool" label="订单"/>
+        <attr name="cancel_the_order" type="bool" label="取消订单"/>
+        <attr name="invoice" type="bool" label="发票"/>
+        <attr name="export_purchase_record" type="bool" label="导出购买记录"/>
+        <attr name="balance_recharge" type="bool" label="余额充值"/>
+        <attr name="balance_record" type="bool" label="余额记录"/>
+        <attr name="class_management" type="bool" label="班级管理"/>
+        <attr name="counselor_management" type="bool" label="辅导员管理"/>
+        <attr name="shuffling_figure" type="bool" label="轮播图"/>
+        <attr name="sector_management" type="bool" label="版块管理"/>
+        <attr name="navigation_bar_management" type="bool" label="导航栏管理"/>
+        <attr name="announcements" type="bool" label="通知公告"/>
+        <attr name="news_center" type="bool" label="新闻中心"/>
+    </entity>
+    <entity name="authority_management_user" label="权限管理用户表">
+        <attr name="name" type="name" label="用户名"/>
+        <attr name="password" type="password" label="密码"/>
+        <attr name="authority_management_id" type="int" table="authority_management" label="权限管理id"/>
+        <oper name="login" page="用户管理" type="login" label="用户登录">
+            data: {id: id},
+            with: {name: name, password: password}
+        </oper>
+        <oper name="get" page="用户管理" type="first" label="用户登录">
+            data: {
+                authority_management_id: {
+                    label_management: label_management,
+                    labels_to_choose: labels_to_choose,
+                    image_resources: image_resources,
+                    video_resources: video_resources,
+                    document_resources: document_resources,
+                    audio_resources: audio_resources,
+                    test_resources: test_resources,
+                    homework_problems: homework_problems,
+                    discussion_topic_resources: discussion_topic_resources,
+                    course_product_list: course_product_list,
+                    activity_management: activity_management,
+                    itemized_product_list: itemized_product_list,
+                    project_package_property_management: project_package_property_management,
+                    project_package_management: project_package_management,
+                    student_management: student_management,
+                    cz_management: cz_management,
+                    credit_hours_management: credit_hours_management,
+                    bulk_registration: bulk_registration,
+                    batch_elective: batch_elective,
+                    batch_classes: batch_classes,
+                    batch_revision_year: batch_revision_year,
+                    order: order,
+                    cancel_the_order: cancel_the_order,
+                    invoice: invoice,
+                    export_purchase_record: export_purchase_record,
+                    balance_recharge: balance_recharge,
+                    balance_record: balance_record,
+                    class_management: class_management,
+                    counselor_management: counselor_management,
+                    shuffling_figure: shuffling_figure,
+                    sector_management: sector_management,
+                    navigation_bar_management: navigation_bar_management,
+                    announcements: announcements,
+                    news_center: news_center
+                }
+            },
+            with: {id: token.id}
+        </oper>
+    </entity>
+    <entity name="publish" time="true" label="信息发布表">
+        <attr name="title" type="name" label="通知公告或新闻的标题"/>
+        <attr name="url" type="text" label="通知公告或新闻的跳转地址"/>
+        <attr name="content" type="text" label="通知公告或新闻的内容（html）"/>
+        <attr name="type" type="int" label="type等于1表示是通知公告，type等于2表示是新闻"/>
+        <oper role="shop" name="search" type="search" label="查询店铺下的通知公告或新闻">
+            data: {
+                id: id,
+                title: title,
+                url: url,
+                content: content
+            },
+            with: {type: type, title: [like, title]}
+        </oper>
+        <oper role="shop" name="insert" type="insert" label="在当前店铺增加一则通知公告或新闻">
+            data: {
+                title: title,
+                content: content,
+                url: url,
+                type: type
+            }
+        </oper>
+        <oper role="shop" name="delete" type="delete" label="删除一则通知公告或新闻">
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" name="update" type="update" label="更新一则通知公告或新闻">
+            data: {
+                title: title,
+                content: content,
+                url: url
+            },
+            with: {
+                id: id
+            }
+        </oper>
+        <oper role="shop" name="get" type="first" label="根据id获取一则通知公告或新闻">
+            data: {
+                title: title,
+                content: content,
+                url: url
+            },
+            with: {
+                id: id,
+                type: type
+            }
+        </oper>
+    </entity>
+</model>
